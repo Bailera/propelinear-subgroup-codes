@@ -1,0 +1,3 @@
+# Only PuLP is required; everything else is in the Python standard library.
+# PuLP ships the CBC solver used for every ILP in the paper.
+PuLP>=2.6
