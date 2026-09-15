@@ -28,13 +28,22 @@ parts are pairwise distinct, i.e. $\lvert\mathrm{supp}(C)\rvert=\lvert C\rvert$.
 ```
 code/
   verify_psc.py          independent verification of any clique file
-  psc_gen.py             generation library: group operation, five candidate sources
+  psc_gen.py             generation library: group operation, five candidate
+                         generators
   ilp_subpool.py         maximum-clique ILP over a restricted subpool
   exact_k2.py            exact values for k = 2, by exhaustive enumeration
   spreadcompat_max.py    largest disjoint family of spread-compatible codewords
   build_lift.py          builds and verifies the lifted families of the product
                          construction, from a spread-compatible base
-  structural_stats.py    support anatomy, isomorphism types, rank/kernel, classes
+  structural_stats.py    support structure, isomorphism types, rank/kernel,
+                         conjugacy classes
+  count_sources.py       classifies a clique's codewords by the nature of their
+                         support, with support multiplicities
+  max_disjoint_subspaces.py
+                         exact maximum of pairwise disjoint subspace supports
+                         occurring in a clique, by ILP
+  multi_structure.py     supports carrying several propelinear structures, with
+                         their rank and whether they are subspaces
 cliques/
   clique_<ndk>.json      explicit codeword lists, one file per case (24 files:
                          13 for the n = 4 table, 8 for the additional parameter
@@ -42,7 +51,6 @@ cliques/
   spreadcompat_<ndk>.json  the codewords underlying the product construction
                          (3 files)
   clique_<ndk>_lift.json   lifted families written by build_lift.py; only the
-
                          smallest, at (12,12,6), is deposited here (1 file)
 ```
 
@@ -116,8 +124,7 @@ an exact value, while `ilp_subpool.py` records the solver status inside
 `method` together with the pool and subpool sizes, its optimum being optimal
 over the subpool rather than over the pool.
 
-Candidate generation draws on five complementary generators -- the algorithmic
-form of the three conceptual sources described in the paper -- because no single
+Candidate generation draws on five complementary generators, because no single
 one covers the search space: linear codewords built explicitly from subspaces in
 reduced row echelon form (these never arise from sampling, as they require the
 identity permutation at every support vector); a walk up the subgroup lattice;
@@ -126,7 +133,34 @@ to the elementary abelian codewords $\mathbb{Z}_2^k$; a mixed-order walk
 covering the intermediate values of the minimal number of generators; and a
 structured construction. Permutations of $2$-power order are constructed rather
 than sampled: involutions alone, for instance, make up only $0.26\%$ of
-$S_{10}$, so rejection sampling finds essentially nothing.
+$S_{10}$, so rejection sampling finds essentially nothing. None of the five
+targets a particular support, so the codewords they produce fall into the three
+kinds described in the paper according to the nature of their support;
+`count_sources.py` reports that distribution for any clique.
+
+## Analysing a clique
+
+Three scripts describe the structure of a deposited clique. None of them is
+needed to check the results; they reproduce the structural statements of the
+paper.
+
+```
+python code/structural_stats.py --clique cliques/clique_663.json --n 6 --k 3
+python code/count_sources.py --clique cliques/clique_884.json --n 8 --k 4
+python code/multi_structure.py --clique cliques/clique_884.json --n 8 --k 4
+python code/max_disjoint_subspaces.py --clique cliques/clique_884.json --n 8 --k 4
+```
+
+`count_sources.py` splits the codewords into the three kinds used in the paper:
+linear, subspace support with a nontrivial permutation assignment, and
+nonlinear support. `multi_structure.py` lists the supports carrying several
+pairwise disjoint structures, with their rank and whether they are subspaces.
+`max_disjoint_subspaces.py` closes by ILP the question of how many of the
+subspace supports occurring in a clique are pairwise disjoint, that is, how
+much of a spread they could form.
+
+Outside the exactly determined cases the cliques are drawn from sampled pools,
+so these counts describe the deposited cliques rather than the optima.
 
 ## Results
 
@@ -248,10 +282,11 @@ pip install -r requirements.txt
 ```
 
 Nothing else is needed; the scripts use only the standard library beyond PuLP.
-Only `psc_gen.py`, `ilp_subpool.py`, `exact_k2.py` and `spreadcompat_max.py`
-import PuLP; `verify_psc.py`, `build_lift.py` and `structural_stats.py` run on a
-bare Python installation, so checking the deposited cliques needs no
-dependencies at all.
+Only `psc_gen.py`, `ilp_subpool.py`, `exact_k2.py`, `spreadcompat_max.py` and
+`max_disjoint_subspaces.py` import PuLP; `verify_psc.py`, `build_lift.py`,
+`structural_stats.py`, `count_sources.py` and `multi_structure.py` run on a bare
+Python installation, so checking the deposited cliques needs no dependencies at
+all.
 
 ## License
 
