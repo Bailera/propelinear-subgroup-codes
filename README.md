@@ -2,7 +2,7 @@
 
 Code, data and verification scripts accompanying the paper
 
-> *Propelinear Subgroup Codes: A Generalization of Constant Dimension
+> *Propelinear Subgroup Codes: A Generalization of Constant-Dimension
 > Subspace Codes*, I. Bailera, D. Crnković, A. Švob.
 
 A **propelinear subgroup code** with parameters $(n,d,k)$ is a family of
