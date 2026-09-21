@@ -25,7 +25,8 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--n", type=int, required=True)
 ap.add_argument("--d", type=int, required=True)
 ap.add_argument("--aq", type=int, required=True)
-ap.add_argument("--paper", type=int, default=None, help="previous value from the paper")
+ap.add_argument("--reference", type=int, default=None,
+                help="a reference value to print alongside the result (optional)")
 ap.add_argument("--time-limit", type=int, default=3600)
 a = ap.parse_args()
 
@@ -110,7 +111,7 @@ ok_dist = all(len(cc[p] & cc[q]) <= max_shared for p in range(value) for q in ra
 ok_group = all(all(prod(u, w) in H for u in H for w in H) for H in clique)
 linear = sum(1 for H in clique if G['is_linear'](H))
 print(f"  verification: distances={ok_dist} groups={ok_group} linear={linear}")
-print(f"  factor {value/a.aq:.1f}x  (A_q={a.aq}" + (f", previous paper value {a.paper}" if a.paper else "") + ")")
+print(f"  factor {value/a.aq:.1f}x  (A_q={a.aq}" + (f", reference value {a.reference}" if a.reference else "") + ")")
 print(f"  {'EXACT VALUE' if exact else 'lower bound (ILP did not prove optimality)'}")
 
 tag = f"{n}{d}{k}"
@@ -122,6 +123,6 @@ json.dump({"case": f"({n},{d},2)", "A_P": value, "status": status, "exact": exac
            "operation": "as in the paper, eq:Un", "n_nondegenerate_subgroups": N,
            "verification_distances": ok_dist, "verification_groups": ok_group,
            "linear": linear, "nonlinear": value-linear,
-           "previous_paper_value": a.paper, "A_q": a.aq},
+           "reference_value": a.reference, "A_q": a.aq},
           open(f"results_{tag}_exact.json", "w"), indent=2, ensure_ascii=False)
 print(f"  written: results_{tag}_exact.json, clique_{tag}_exact.{{pkl,json}}")
