@@ -343,7 +343,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
 
     bad = G['check_assoc']()
     assert bad == 0, f"ABORTED: the group operation is not associative ({bad}/5000)"
-    print(f"[check] operation verified associative (0/5000)")
+    print("[check] operation verified associative (0/5000)")
     print(f"Case ({n},{d},{k}): order {ORDER}, threshold |core cap core| <= {max_shared}\n")
 
     pool = set()
@@ -386,7 +386,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
         o = G['element_order'](a)
         if o in buckets and len(buckets[o]) < 40000: buckets[o].append(a)
         if o == 2 and len(inv2) < 40000: inv2.append(a)
-    print(f"  reserves: " + " ".join(f"ord{o}:{len(buckets[o])}" for o in sorted(buckets)))
+    print("  reserves: " + " ".join(f"ord{o}:{len(buckets[o])}" for o in sorted(buckets)))
 
     # --- generators 2, 3, 4, 5 mixed ---
     def accept(H):
@@ -465,8 +465,8 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
     if N > ilp_cap:
         print(f"\n  ILP SKIPPED: {N} candidates exceeds the cap of {ilp_cap}"
               + ("" if max_shared == 0 else
-                 f" (sub-maximum distance: pairwise construction is O(N^2))") + ".")
-        print(f"  To exploit the pool, run separately:")
+                 " (sub-maximum distance: pairwise construction is O(N^2))") + ".")
+        print("  To exploit the pool, run separately:")
         print(f"    python ilp_subpool.py --pool pool_{NAME}.pkl "
               f"--n {n} --d {d} --k {k} --aq {a_q} --seed clique_{NAME}.pkl")
         chosen, method = best, "greedy (ILP skipped due to size; use ilp_subpool.py)"
@@ -493,7 +493,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
         print(f"  written: results_{NAME}.json, clique_{NAME}.pkl, pool_{NAME}.pkl")
         return value
 
-    print(f"  building the ILP...")
+    print("  building the ILP...")
     prob = pulp.LpProblem("c", pulp.LpMaximize)
     x = [pulp.LpVariable(f"x{i}", cat="Binary") for i in range(N)]
     prob += pulp.lpSum(x)
@@ -513,7 +513,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
     density = n_constraints / max(1, N)
     print(f"  {n_constraints} constraints over {N} variables (density {density:.2f})")
     if density > 0.15:
-        print(f"  WARNING: dense conflict graph; CBC may take very long. If it does,")
+        print("  WARNING: dense conflict graph; CBC may take very long. If it does,")
         print(f"         stop it and use ilp_subpool.py on pool_{NAME}.pkl")
     print(f"  solving (limit {ILP_TIME}s)...")
     t0 = time.time()
