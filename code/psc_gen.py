@@ -196,10 +196,10 @@ def subspaces_random(n, k, count, seed=0):
         basis = []
         span = {zero}
         for _ in range(k):
-            free_positions = [v for v in (tuple(rng.randint(0, 1) for _ in range(n))
-                                  for _ in range(30)) if v not in span]
-            if not free_positions: break
-            v = free_positions[0]
+            candidates = [v for v in (tuple(rng.randint(0, 1) for _ in range(n))
+                              for _ in range(30)) if v not in span]
+            if not candidates: break
+            v = candidates[0]
             basis.append(v)
             span = {tuple((a[i]+b[i]) % 2 for i in range(n))
                     for a in span for b in (zero, v)}
@@ -243,16 +243,6 @@ def lattice_walk(G, target, tries=12):
 
 
 # ------------------------------------------------------------- generator 3
-def collect_involutions(G, seconds=20, cap=40000):
-    """Collect elements of order 2, for the elementary abelian subgroups."""
-    element_order, rnd = G['element_order'], G['rnd']
-    t0 = time.time(); out = []
-    while time.time()-t0 < seconds and len(out) < cap:
-        a = rnd()
-        if element_order(a) == 2: out.append(a)
-    return out
-
-
 def involution_walk(G, target, inv2, sample_size=400):
     """A walk using ONLY commuting involutions: reaches Z_2^k and its kin."""
     e, prod, extend = G['e'], G['prod'], G['extend']
@@ -271,6 +261,7 @@ def involution_walk(G, target, inv2, sample_size=400):
     return H if len(H) == target else None
 
 
+# ------------------------------------------------------------- generator 4
 def mixed_walk(G, target, buckets, sample_size=200):
     """A walk extending by elements of mixed order, not only involutions. It
     covers the intermediate values of d(G): involutions alone yield mostly
@@ -293,7 +284,7 @@ def mixed_walk(G, target, buckets, sample_size=200):
     return H if len(H) == target else None
 
 
-# ----------------------------------------------------------- generators 4-5
+# ------------------------------------------------------------- generator 5
 def structured(G, target, buckets):
     """Cyclic <a> and two-generated <a,b> with prescribed element orders."""
     e, extend = G['e'], G['extend']
@@ -387,6 +378,8 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
     # --- buckets by element_order, for generators 3, 4 and 5 ---
     t0 = time.time()
     buckets = {2**i: [] for i in range(1, k+1)}
+    # inv2 holds the same elements as buckets[2] (filled from the same draws
+    # with the same cap); it is kept as a separate name for the involution walk.
     inv2 = []
     while time.time()-t0 < GEN_TIME*0.15:
         a = G['rnd']()
@@ -433,23 +426,23 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
     def greedy(s):
         random.seed(s); order_idx = list(range(N)); random.shuffle(order_idx)
         if max_shared == 0:
-            used = set(); changed = []
+            used = set(); chosen_idx = []
             for i in order_idx:
                 if core[i] & used: continue
-                changed.append(i); used |= core[i]
-            return changed
+                chosen_idx.append(i); used |= core[i]
+            return chosen_idx
         # element -> already chosen positions: avoids comparing the
         # candidate against the whole clique at each step (unusable with
         # pools of hundreds of thousands).
-        occupied = defaultdict(list); changed = []
+        occupied = defaultdict(list); chosen_idx = []
         for i in order_idx:
             shares = Counter()
             for el in core[i]:
                 for pos in occupied.get(el, ()): shares[pos] += 1
             if shares and max(shares.values()) > max_shared: continue
-            pos = len(changed); changed.append(i)
+            pos = len(chosen_idx); chosen_idx.append(i)
             for el in core[i]: occupied[el].append(pos)
-        return changed
+        return chosen_idx
     reps = GREEDY_REPS if max_shared == 0 else max(200, GREEDY_REPS//20)
     best = []
     for s in range(reps):
@@ -474,8 +467,8 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
               + ("" if max_shared == 0 else
                  f" (sub-maximum distance: pairwise construction is O(N^2))") + ".")
         print(f"  To exploit the pool, run separately:")
-        print(f"    python ilp_subpool.py --pool pool_{n}{d}{k}.pkl "
-              f"--n {n} --d {d} --k {k} --aq {a_q} --seed clique_{n}{d}{k}.pkl")
+        print(f"    python ilp_subpool.py --pool pool_{NAME}.pkl "
+              f"--n {n} --d {d} --k {k} --aq {a_q} --seed clique_{NAME}.pkl")
         chosen, method = best, "greedy (ILP skipped due to size; use ilp_subpool.py)"
         value = len(chosen)
         print(f"\n===== A^P({n},{d},{k}) >= {value}  [{method}] =====")
@@ -506,7 +499,6 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
     prob += pulp.lpSum(x)
     n_constraints = 0
     if max_shared == 0:
-        from collections import defaultdict
         elem_to_cands = defaultdict(list)
         for i, c in enumerate(core):
             for el in c: elem_to_cands[el].append(i)
@@ -522,7 +514,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
     print(f"  {n_constraints} constraints over {N} variables (density {density:.2f})")
     if density > 0.15:
         print(f"  WARNING: dense conflict graph; CBC may take very long. If it does,")
-        print(f"         stop it and use ilp_subpool.py on pool_{n}{d}{k}.pkl")
+        print(f"         stop it and use ilp_subpool.py on pool_{NAME}.pkl")
     print(f"  solving (limit {ILP_TIME}s)...")
     t0 = time.time()
     try:
