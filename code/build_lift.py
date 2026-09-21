@@ -36,8 +36,7 @@ Usage:
     python build_lift.py --base spreadcompat_884.json  --n 8  --k 4
     python build_lift.py --base spreadcompat_10105.json --n 10 --k 5
 """
-import argparse, json, math, os, pickle, sys, time
-from collections import defaultdict
+import argparse, json, os, pickle, sys, time
 
 # ------------------------------------------------------------ group U_N
 def make_group(N):
