@@ -339,7 +339,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
     max_shared = 2**((2*k-d)//2) - 1
     NAME = f"{n}{d}{k}{TAG}"   # optional suffix for running parallel instances
     G = make(n)
-    e, prod, idp = G['e'], G['prod'], G['idp']
+    e, prod = G['e'], G['prod']
 
     bad = G['check_assoc']()
     assert bad == 0, f"ABORTED: the group operation is not associative ({bad}/5000)"
