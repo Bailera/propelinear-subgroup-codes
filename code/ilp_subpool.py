@@ -40,7 +40,8 @@ ap.add_argument("--min-compat", type=int, default=None,
                      "(default |seed|-25)")
 ap.add_argument("--max-subpool", type=int, default=6000)
 ap.add_argument("--time-limit", type=int, default=3600)
-ap.add_argument("--paper", type=int, default=None)
+ap.add_argument("--reference", type=int, default=None,
+                help="a reference value to print alongside the result (optional)")
 ap.add_argument("--out-tag", default=None)
 a = ap.parse_args()
 
@@ -70,7 +71,9 @@ N = len(pool)
 index_of = {H: i for i, H in enumerate(pool)}
 
 # ---------- seed ----------
-if a.seed and os.path.exists(a.seed):
+if a.seed and not os.path.exists(a.seed):
+    raise SystemExit(f"ABORTED: seed file {a.seed} does not exist")
+if a.seed:
     seed_words = load(a.seed)
     # Seed codewords absent from the pool are added: they are valid subgroups
     # and must be allowed into the final clique.
@@ -176,7 +179,9 @@ ok_dist = all(len(cores_sel[p] & cores_sel[q]) <= max_shared for p in range(valu
 ok_group = all(all(prod(u, w) in H for u in H for w in H) for H in clique)
 n_linear = sum(1 for H in clique if G['is_linear'](H))
 print(f"  verification: distances={ok_dist} groups={ok_group} linear={n_linear}")
-print(f"  factor {value/a.aq:.1f}x  (A_q={a.aq}" + (f", previous paper value {a.paper}" if a.paper else "") + ")")
+if not (ok_dist and ok_group):
+    raise SystemExit("ABORTED: the clique failed verification; nothing written")
+print(f"  factor {value/a.aq:.1f}x  (A_q={a.aq}" + (f", reference value {a.reference}" if a.reference else "") + ")")
 
 tag = a.out_tag or f"{n}{d}{k}"
 out = f"clique_{tag}.json"
@@ -190,6 +195,6 @@ json.dump({"case": f"({n},{d},{k})", "A_P": value, "method": method,
            "subpool_size": len(sub), "min_compat": min_compat,
            "verification_distances": ok_dist, "verification_groups": ok_group,
            "linear": n_linear, "nonlinear": value-n_linear,
-           "previous_paper_value": a.paper, "A_q": a.aq},
+           "reference_value": a.reference, "A_q": a.aq},
           open(f"results_{tag}.json", "w"), indent=2, ensure_ascii=False)
 print(f"  written: results_{tag}.json, clique_{tag}.{{pkl,json}}")
