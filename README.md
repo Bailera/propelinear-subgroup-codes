@@ -8,7 +8,7 @@ Code, data and verification scripts accompanying the paper
 A **propelinear subgroup code** with parameters $(n,d,k)$ is a family of
 nondegenerate subgroups of order $2^k$ of the group
 
-$$U_n=\mathbb{F}_2^n\rtimes S_n,\qquad (x,\pi_x)(y,\pi_y)=(x+\pi_x(y), \pi_x\pi_y),$$
+$$U_n=\mathbb{F}_2^n\rtimes S_n,\qquad (x,\sigma)(y,\tau)=(x+\sigma(y), \sigma\tau),$$
 
 pairwise at propelinear distance at least $d$, where
 
@@ -19,8 +19,8 @@ two and $d_P$ takes only even values; requiring $d_P\ge d$ is equivalent to
 $\lvert C_i\cap C_j\rvert\le 2^{(2k-d)/2}$, which is the threshold the
 verification script checks.
 
-Here the action is $(\pi(v))_i=v_{\pi^{-1}(i)}$ and the composition is
-$(\pi\sigma)(i)=\pi(\sigma(i))$; a subgroup is *nondegenerate* when its vector
+Here the action is $(\sigma(v))_i=v_{\sigma^{-1}(i)}$ and the composition is
+$(\sigma\tau)(i)=\sigma(\tau(i))$; a subgroup is *nondegenerate* when its vector
 parts are pairwise distinct, i.e. $\lvert\mathrm{supp}(C)\rvert=\lvert C\rvert$.
 
 ## Contents
@@ -138,9 +138,16 @@ targets a particular support, so the codewords they produce fall into the three
 kinds described in the paper according to the nature of their support;
 `count_sources.py` reports that distribution for any clique.
 
+The generators run for a fixed time budget rather than a fixed number of steps,
+so the pools depend on the hardware and rerunning the search yields comparable
+rather than identical cliques; the exact values, obtained by exhaustive
+enumeration, are unaffected. The pools themselves are not deposited. What is
+deposited, and what the paper's claims rest on, are the cliques, each of which
+can be checked with `verify_psc.py` independently of how it was found.
+
 ## Analysing a clique
 
-Three scripts describe the structure of a deposited clique. None of them is
+Four scripts describe the structure of a deposited clique. None of them is
 needed to check the results; they reproduce the structural statements of the
 paper.
 
