@@ -22,7 +22,7 @@ import json
 import math
 import pickle
 import random
-from collections import Counter, defaultdict
+from collections import Counter
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--clique", required=True)
