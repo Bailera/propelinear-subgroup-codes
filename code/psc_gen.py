@@ -328,7 +328,7 @@ def report_pool(G, pool, k, label="pool", dgen_sample=3000, warn=True):
 
 
 # ---------------------------------------------------------------- pipeline
-def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
+def pipeline(n, d, k, reference, a_q, GEN_TIME=300, ILP_TIME=900,
              LIN_CAP=20000, GREEDY_REPS=5000, seed=0, PREVIOUS_POOL=None,
              MAX_ILP_VARS=400000, MAX_ILP_PAIRWISE=8000, TAG=""):
     """Full pipeline for one case (n,d,k): generation -> pool -> greedy -> ILP.
@@ -478,7 +478,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
         ok_group = all(all(prod(u, w) in H for u in H for w in H) for H in clique)
         n_linear = sum(1 for H in clique if G['is_linear'](H))
         print(f"  verification: distances={ok_dist} groups={ok_group} linear={n_linear}")
-        print(f"  factor {value/a_q:.1f}x  (previous paper value: {paper_old}, A_q={a_q})")
+        print(f"  factor {value/a_q:.1f}x  (reference value: {reference}, A_q={a_q})")
         report_pool(G, clique, k, "clique", warn=False)
         serialized = [[[list(v), list(p)] for v, p in H] for H in clique]
         pickle.dump(serialized, open(f"clique_{NAME}.pkl", "wb"))
@@ -487,7 +487,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
                    "operation": "as in the paper, eq:Un", "pool_size": N,
                    "pool_healthy": healthy, "verification_distances": ok_dist,
                    "verification_groups": ok_group, "linear": n_linear,
-                   "nonlinear": value-n_linear, "previous_paper_value": paper_old,
+                   "nonlinear": value-n_linear, "reference_value": reference,
                    "A_q": a_q, "note": "lower bound; ILP still to be run (ilp_subpool.py)"},
                   open(f"results_{NAME}.json", "w"), indent=2, ensure_ascii=False)
         print(f"  written: results_{NAME}.json, clique_{NAME}.pkl, pool_{NAME}.pkl")
@@ -541,7 +541,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
     ok_group = all(all(prod(a, b) in H for a in H for b in H) for H in clique)
     n_linear = sum(1 for H in clique if G['is_linear'](H))
     print(f"  verification: distances={ok_dist} groups={ok_group} linear={n_linear}")
-    print(f"  factor {value/a_q:.1f}x  (previous paper value: {paper_old}, A_q={a_q})")
+    print(f"  factor {value/a_q:.1f}x  (reference value: {reference}, A_q={a_q})")
     report_pool(G, clique, k, "clique", warn=False)
     serialized = [[[list(v), list(p)] for v, p in H] for H in clique]
     pickle.dump(serialized, open(f"clique_{NAME}.pkl", "wb"))
@@ -550,7 +550,7 @@ def pipeline(n, d, k, paper_old, a_q, GEN_TIME=300, ILP_TIME=900,
                "operation": "as in the paper, eq:Un", "pool_size": N,
                "pool_healthy": healthy, "verification_distances": ok_dist,
                "verification_groups": ok_group, "linear": n_linear,
-               "nonlinear": value-n_linear, "previous_paper_value": paper_old,
+               "nonlinear": value-n_linear, "reference_value": reference,
                "A_q": a_q, "note": "lower bound (sampled pool); raise GEN_TIME for a larger pool"},
               open(f"results_{NAME}.json", "w"), indent=2, ensure_ascii=False)
     print(f"  written: results_{NAME}.json, clique_{NAME}.pkl, pool_{NAME}.pkl")
