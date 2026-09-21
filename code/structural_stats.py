@@ -3,7 +3,7 @@
 structural_stats.py -- Recompute every structural invariant reported in the
 paper, over a given clique, and print the results as LaTeX-ready fragments.
 
-The structural sections of the paper (support anatomy, isomorphism types,
+The structural sections of the paper (support structure, isomorphism types,
 rank/kernel pairs, conjugacy classes) are properties of the *particular*
 clique they were computed on. When a clique is replaced by a larger one they
 must all be recomputed; swapping the cardinality is not enough.
@@ -107,7 +107,7 @@ M = len(clique)
 print(f"clique: {M} codewords of order {ORDER} in U_{n}\n")
 
 
-# ------------------------------------------------------- support anatomy
+# ----------------------------------------------------- support structure
 def support(H):
     return frozenset(v for v, p in H)
 
@@ -125,7 +125,7 @@ subspace_sups = sum(1 for s in by_support if is_subspace(s))
 multi = Counter(c for c in by_support.values() if c >= 2)
 
 print("=" * 62)
-print("tab:anatomy  --  support anatomy")
+print("tab:support  --  support structure")
 print("=" * 62)
 print(f"  total M ................. {M}")
 print(f"  distinct supports ....... {distinct}")
@@ -137,12 +137,12 @@ if multi:
     print(f"  multi-structure ......... {detail}")
     print(f"  (max structures on one support: {max(by_support.values())})")
 else:
-    print(f"  multi-structure ......... 0")
+    print("  multi-structure ......... 0")
 mx = max(by_support.values())
 cell = (f"${sum(multi.values())}$ supports with $\\ge 2$ structures"
         if len(multi) > 1 else
         (f"${multi[mx]}$ supports with ${mx}$ structures" if multi else "$0$"))
-print(f"\n  LaTeX row:")
+print("\n  LaTeX row:")
 print(f"  $({n},{k})$ & ${M}$ & ${distinct}$ & ${subspace_sups}$ & {cell} \\\\")
 
 
@@ -288,7 +288,7 @@ fmt = lambda c: ", ".join(f"$({r},{d})\\times {m}$"
                           for (r, d), m in sorted(c.items(), key=lambda t: -t[1]))
 print(f"  linear support ....... {fmt(lin_pairs) if lin_pairs else 'none'}")
 print(f"  nonlinear support .... {fmt(nonlin_pairs) if nonlin_pairs else 'none'}")
-print(f"\n  LaTeX row:")
+print("\n  LaTeX row:")
 print(f"  $({n},{2*k},{k})$, $M={M}$ & {fmt(lin_pairs)} & {fmt(nonlin_pairs)} \\\\")
 
 
@@ -374,8 +374,8 @@ if a.classes:
     # leaves one class split in two: the partition obtained is finer than the
     # true one and the count is an UPPER bound on the number of classes.
     print(f"  UPPER bound: at most {classes} classes among {M} codewords")
-    print(f"    (merges only proven conjugations, so missed ones inflate the count;")
-    print(f"     raising --class-samples can only lower this number)")
+    print("    (merges only proven conjugations, so missed ones inflate the count;")
+    print("     raising --class-samples can only lower this number)")
     print(f"  largest class sizes: {top}")
     print(f"  singletons: {sum(1 for s in sizes.values() if s == 1)}")
 
