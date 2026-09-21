@@ -36,7 +36,7 @@ max_shared = 2**((2*k - d)//2) - 1
 
 bad = G['check_assoc']()
 assert bad == 0, f"ABORTED: the group operation is not associative ({bad}/5000)"
-print(f"[check] operation verified associative (0/5000)")
+print("[check] operation verified associative (0/5000)")
 print(f"Case ({n},{d},2): order 4, threshold |core cap core| <= {max_shared}\n")
 
 allU = [(v, p) for v in product((0, 1), repeat=n) for p in permutations(range(n))]
