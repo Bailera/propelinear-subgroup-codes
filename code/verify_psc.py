@@ -3,27 +3,33 @@
 verify_psc.py -- Independent verification of propelinear subgroup codes.
 
 Checks that a clique file describes a valid propelinear subgroup code for the
-parameters (n, d, k), verifying four properties from first principles:
+parameters (n, d, k), verifying three properties from first principles:
 
   1. every codeword is a subgroup of U_n of order 2^k (closure under the
      twisted product, recomputed here rather than trusted);
   2. every codeword is nondegenerate, i.e. |supp(C)| = |C|;
   3. no two codewords share more than the permitted number of nonidentity
-     elements, so that the minimum propelinear distance is at least d;
-  4. the reported cardinality matches the file.
+     elements, so that the minimum propelinear distance is at least d.
+
+If all three hold, the number of codewords in the file is a certified lower
+bound on A^P_nd(n, d, k), and the script reports it.
 
 The group operation is recomputed independently of the generation code:
 
     (x, p)(y, q) = (x + p(y), p * q),
     (p(v))_i = v_{p^{-1}(i)},   (p * q)(i) = p(q(i)).
 
-Distance and threshold. For codewords of order 2^k,
+Distance and threshold. For subgroups C_i, C_j of order 2^k,
 
-    d_P(C_i, C_j) = 2k - 2 log2 |C_i* cap C_j*|,   C* = C \\ {e},
+    d_P(C_i, C_j) = 2k - 2 log2 |C_i cap C_j|,
 
-so d_P(C_i, C_j) >= d is equivalent to
+where the intersection is taken in U_n and contains the identity. Since the
+identity lies in every subgroup, d_P(C_i, C_j) >= d is equivalent to a bound
+on the number of shared NONIDENTITY elements,
 
-    |C_i* cap C_j*| <= 2^((2k-d)/2) - 1.
+    |C_i cap C_j| - 1 <= 2^((2k-d)/2) - 1,
+
+which is the form checked below.
 
 For d = 2k this threshold is 0 (codewords meet only in the identity); for
 d < 2k it is positive, and sharing that many elements is allowed.
@@ -126,14 +132,14 @@ def infer_parameters(path):
     digits = m.group(1)
     if len(digits) == 3:                      # 663    -> (6, 6, 3)
         return int(digits[0]), int(digits[1]), int(digits[2])
-    if len(digits) == 4:                      # 12126  -> handled below; 884 is 3
-        return None                           # ambiguous: pass --n --d --k
-    if len(digits) == 5:                      # 10105  -> (10, 10, 5)
+    if len(digits) == 4:                      # no unambiguous split
+        return None                           # pass --n --d --k explicitly
+    if len(digits) == 5:                      # 10105 -> (10,10,5), 12126 -> (12,12,6)
         n_, d_, k_ = int(digits[:2]), int(digits[2:4]), int(digits[4])
         if d_ == 2 * k_ and n_ == d_:
             return n_, d_, k_
         return int(digits[0]), int(digits[1:3]), int(digits[3:])
-    if len(digits) == 6:                      # 121206 / 202010 -> (12,12,6)
+    if len(digits) == 6:                      # 202010 -> (20,20,10)
         for split in ((2, 4), (2, 3)):
             n_ = int(digits[:split[0]])
             d_ = int(digits[split[0]:split[1]])

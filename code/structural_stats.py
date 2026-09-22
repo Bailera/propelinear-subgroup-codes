@@ -12,10 +12,14 @@ Usage:
     python structural_stats.py --clique clique_663.json  --n 6  --k 3
     python structural_stats.py --clique clique_884.json  --n 8  --k 4
     python structural_stats.py --clique clique_10105.json --n 10 --k 5
-    python structural_stats.py --clique clique_442.json  --n 4  --k 2 --classes
+    python structural_stats.py --clique clique_442.json  --n 4  --k 2 --exact-classes
+    python structural_stats.py --clique clique_663.json  --n 6  --k 3 --exact-classes
 
-Add --classes to run the randomized conjugacy-class search (slow on large
-cliques; it is only reported in the paper for the small ones).
+Add --exact-classes to count conjugacy classes exactly, by conjugating every
+codeword by every element of U_n; this is how the class counts reported in the
+paper were obtained, and it is feasible for n <= 6. For larger n, --classes
+runs a randomized search instead, which gives an upper bound on the number of
+classes together with a lower bound from isomorphism invariants.
 """
 import argparse
 import json
@@ -104,6 +108,8 @@ def load(path):
 
 clique = load(a.clique)
 M = len(clique)
+if M == 0:
+    raise SystemExit(f"ABORTED: {a.clique} contains no codewords")
 print(f"clique: {M} codewords of order {ORDER} in U_{n}\n")
 
 
@@ -143,7 +149,7 @@ cell = (f"${sum(multi.values())}$ supports with $\\ge 2$ structures"
         if len(multi) > 1 else
         (f"${multi[mx]}$ supports with ${mx}$ structures" if multi else "$0$"))
 print("\n  LaTeX row:")
-print(f"  $({n},{k})$ & ${M}$ & ${distinct}$ & ${subspace_sups}$ & {cell} \\\\")
+print(f"  $({n},{2*k},{k})$ & ${M}$ & ${distinct}$ & ${subspace_sups}$ & {cell} \\\\")
 
 
 # ------------------------------------------------------- isomorphism types

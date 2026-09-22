@@ -97,11 +97,9 @@ def certify_subgroup(H, e, prod, order):
             for g in gens:
                 y = prod(x, g)
                 if y not in S:
-                    if len(S) >= order and y not in H:
-                        return False
-                    S.add(y)
                     if y not in H:
                         return False
+                    S.add(y)
                     frontier.append(y)
         if len(S) == order:
             break
@@ -111,7 +109,7 @@ def certify_subgroup(H, e, prod, order):
 # ------------------------------------------------- GF(2^m) and the spread
 IRREDUCIBLE = {2: 0b111, 4: 0b10011, 6: 0b1000011, 8: 0b100011101,
                10: 0b10000001001, 12: 0b1000001010011,
-               14: 0b100010000100011, 16: 0b10001000000001011}
+               14: 0b100000000100001, 16: 0b10001000000001011}
 
 
 def pdeg(a):

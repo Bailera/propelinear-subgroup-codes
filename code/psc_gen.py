@@ -29,7 +29,7 @@ number of generators d(G) = log2 |G : Phi(G)| together with the count of
 linear codewords. If the value d(G)=k is missing, or if there are no linear
 codewords, the generation is biased and the pool is incomplete.
 """
-import json, pickle
+import json, os, pickle
 from itertools import permutations, combinations
 import random, math, time
 from collections import Counter, defaultdict
@@ -350,7 +350,6 @@ def pipeline(n, d, k, reference, a_q, GEN_TIME=300, ILP_TIME=900,
 
     # --- generator 0: previous pool (optional). Everything is revalidated before merging ---
     if PREVIOUS_POOL:
-        import os
         paths = [PREVIOUS_POOL] if isinstance(PREVIOUS_POOL, str) else list(PREVIOUS_POOL)
         for path in paths:
             if not os.path.exists(path):
@@ -481,6 +480,8 @@ def pipeline(n, d, k, reference, a_q, GEN_TIME=300, ILP_TIME=900,
         print(f"  factor {value/a_q:.1f}x  (reference value: {reference}, A_q={a_q})")
         report_pool(G, clique, k, "clique", warn=False)
         serialized = [[[list(v), list(p)] for v, p in H] for H in clique]
+        if os.path.exists(f"clique_{NAME}.json"):
+            print(f"  NOTE: clique_{NAME}.json already exists and will be overwritten")
         pickle.dump(serialized, open(f"clique_{NAME}.pkl", "wb"))
         json.dump(serialized, open(f"clique_{NAME}.json", "w"))
         json.dump({"case": f"({n},{d},{k})", "A_P": value, "method": method,
@@ -521,6 +522,10 @@ def pipeline(n, d, k, reference, a_q, GEN_TIME=300, ILP_TIME=900,
         # msg=1: without CBC's output a long ILP is indistinguishable from a hang
         prob.solve(pulp.PULP_CBC_CMD(msg=1, timeLimit=ILP_TIME))
         status = pulp.LpStatus[prob.status]
+        # PuLP reports "Optimal" also when CBC stops on the time limit with a
+        # feasible solution; only sol_status tells a proven optimum apart.
+        if status == "Optimal" and prob.sol_status != pulp.LpSolutionOptimal:
+            status = "Feasible (time limit, not proven optimal)"
         selected = [i for i in range(N) if pulp.value(x[i]) and pulp.value(x[i]) > 0.5]
     except Exception as ex:
         print(f"  (CBC failed: {ex})"); selected = []; status = "CBC error"
@@ -544,6 +549,8 @@ def pipeline(n, d, k, reference, a_q, GEN_TIME=300, ILP_TIME=900,
     print(f"  factor {value/a_q:.1f}x  (reference value: {reference}, A_q={a_q})")
     report_pool(G, clique, k, "clique", warn=False)
     serialized = [[[list(v), list(p)] for v, p in H] for H in clique]
+    if os.path.exists(f"clique_{NAME}.json"):
+        print(f"  NOTE: clique_{NAME}.json already exists and will be overwritten")
     pickle.dump(serialized, open(f"clique_{NAME}.pkl", "wb"))
     json.dump(serialized, open(f"clique_{NAME}.json", "w"))
     json.dump({"case": f"({n},{d},{k})", "A_P": value, "method": method,

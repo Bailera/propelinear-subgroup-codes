@@ -17,7 +17,7 @@ Usage:
     python spreadcompat_max.py --pool pool_884.pkl --n 8 --k 4
     python spreadcompat_max.py --pool pool_663.pkl --n 6 --k 3 --time-limit 3600
 """
-import argparse, json, pickle, random, time
+import argparse, json, os, pickle, random, time
 from collections import defaultdict
 
 ap = argparse.ArgumentParser()
@@ -27,7 +27,9 @@ ap.add_argument("--k", type=int, required=True)
 ap.add_argument("--time-limit", type=int, default=3600)
 ap.add_argument("--greedy-reps", type=int, default=3000)
 ap.add_argument("--max-ilp", type=int, default=60000,
-                help="if more spread-compatible candidates than this, ILP is run on a sample")
+                help="if there are more spread-compatible candidates than this, the ILP "
+                     "is restricted to the greedy seed and the candidates that clash "
+                     "least with it")
 ap.add_argument("--out", default=None)
 a = ap.parse_args()
 
@@ -118,6 +120,10 @@ print(f"ILP: {len(keep)} variables, {nres} constraints, limit {a.time_limit}s")
 t0 = time.time()
 prob.solve(pulp.PULP_CBC_CMD(msg=1, timeLimit=a.time_limit, warmStart=True))
 status = pulp.LpStatus[prob.status]
+# PuLP reports "Optimal" also when CBC stops on the time limit with a
+# feasible solution; only sol_status tells a proven optimum apart.
+if status == "Optimal" and prob.sol_status != pulp.LpSolutionOptimal:
+    status = "Feasible (time limit, not proven optimal)"
 sel = [keep[j] for j in range(len(keep)) if pulp.value(x[j]) and pulp.value(x[j]) > 0.5]
 if len(sel) < len(best): sel = best; status += " (greedy seed kept)"
 m = len(sel)
@@ -152,10 +158,15 @@ print(f"  pairwise disjoint: {ok} | all spread-compatible: {allspreadcompat} "
 if not (ok and allspreadcompat and ok_group):
     raise SystemExit("FAILED verification: the value of m must not be used")
 
-lifted = (2**(2*n) - 1)//(2**(2*k) - 1) + m
-print(f"\n  lift to ({2*n},{4*k},{2*k}):  A^P >= (2^{2*n}-1)/(2^{2*k}-1) + {m} "
-      f"= {(2**(2*n)-1)//(2**(2*k)-1)} + {m} = {lifted}")
+if n % k == 0:
+    lifted = (2**(2*n) - 1)//(2**(2*k) - 1) + m
+    print(f"\n  lift to ({2*n},{4*k},{2*k}):  A^P >= (2^{2*n}-1)/(2^{2*k}-1) + {m} "
+          f"= {(2**(2*n)-1)//(2**(2*k)-1)} + {m} = {lifted}")
+else:
+    print(f"\n  no lift: the product construction requires k | n, and {k} does not divide {n}")
 
 out = a.out or f"spreadcompat_{n}{2*k}{k}.json"
+if os.path.exists(out):
+    print(f"  NOTE: {out} already exists and will be overwritten")
 json.dump([[[list(v), list(p)] for v, p in H] for H in chosen], open(out, "w"))
 print(f"  written {out}")

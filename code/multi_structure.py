@@ -5,9 +5,10 @@ pairwise disjoint propelinear structures.
 
 For each such support the script reports how many codewords share it, whether
 the support is a subspace of F_2^n, and its F_2-rank. The question it answers
-is whether the multi-structure mechanism is confined to subspace supports
-(where the setwise stabilizer in S_n is large, so there is more room for
-distinct permutation assignments) or also occurs on nonlinear ones.
+is whether the multi-structure mechanism is confined to subspace supports or
+also occurs on nonlinear ones, and which kind of support attains the largest
+number of structures. When several supports tie for the maximum, all of them
+are reported.
 
 Usage (from the folder holding the clique files):
     python multi_structure.py --clique clique_442.json   --n 4  --k 2
@@ -71,24 +72,37 @@ if not multi:
     print("no support carries more than one codeword")
     raise SystemExit(0)
 
+# each support is classified once
+is_sub = {s: is_subspace(s) for s in multi}
+rk = {s: rank(s) for s in multi}
+
 print(f"{len(multi)} supports carry several codewords\n")
 print(f"{'structures':>11}  {'subspace?':>10}  {'rank':>5}  count")
 rows = Counter()
 for s, idxs in multi.items():
-    rows[(len(idxs), is_subspace(s), rank(s))] += 1
+    rows[(len(idxs), is_sub[s], rk[s])] += 1
 for (m, sub, r), c in sorted(rows.items(), key=lambda t: (-t[0][0], t[0][1])):
     print(f"{m:>11}  {'yes' if sub else 'no':>10}  {r:>5}  {c}")
 
 # summary: extra codewords attributable to each kind of support
-extra_sub = sum(len(i) - 1 for s, i in multi.items() if is_subspace(s))
-extra_non = sum(len(i) - 1 for s, i in multi.items() if not is_subspace(s))
-n_sub = sum(1 for s in multi if is_subspace(s))
+extra_sub = sum(len(i) - 1 for s, i in multi.items() if is_sub[s])
+extra_non = sum(len(i) - 1 for s, i in multi.items() if not is_sub[s])
+n_sub = sum(1 for s in multi if is_sub[s])
 print(f"\nmulti-structure supports that are subspaces ..... {n_sub}")
 print(f"                          that are not .......... {len(multi)-n_sub}")
 print(f"extra codewords from subspace supports .......... {extra_sub}")
 print(f"                  from nonlinear supports ....... {extra_non}")
 
-top = max(multi.items(), key=lambda t: len(t[1]))
-s, idxs = top
-print(f"\nlargest: {len(idxs)} structures on one support, "
-      f"{'a subspace' if is_subspace(s) else 'NOT a subspace'}, rank {rank(s)}")
+# the largest multiplicity, and EVERY support attaining it (ties are common)
+top_m = max(len(i) for i in multi.values())
+tops = [s for s, i in multi.items() if len(i) == top_m]
+top_sub = sum(1 for s in tops if is_sub[s])
+top_ranks = sorted(Counter(rk[s] for s in tops).items())
+print(f"\nlargest: {top_m} structures on one support, attained by {len(tops)} "
+      f"support(s): {top_sub} subspace(s), {len(tops)-top_sub} not")
+print("  ranks of those supports: "
+      + ", ".join(f"rank {r} x{c}" for r, c in top_ranks))
+non_max = max((len(i) for s, i in multi.items() if not is_sub[s]), default=None)
+sub_max = max((len(i) for s, i in multi.items() if is_sub[s]), default=None)
+print(f"  largest multiplicity on a subspace support .... {sub_max}")
+print(f"  largest multiplicity on a nonlinear support ... {non_max}")

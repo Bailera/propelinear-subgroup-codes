@@ -159,6 +159,10 @@ t0 = time.time()
 try:
     prob.solve(pulp.PULP_CBC_CMD(msg=1, timeLimit=a.time_limit, warmStart=True))
     status = pulp.LpStatus[prob.status]
+    # PuLP reports "Optimal" also when CBC stops on the time limit with a
+    # feasible solution; only sol_status tells a proven optimum apart.
+    if status == "Optimal" and prob.sol_status != pulp.LpSolutionOptimal:
+        status = "Feasible (time limit, not proven optimal)"
     selected = [sub[j] for j in range(len(sub)) if pulp.value(x[j]) and pulp.value(x[j]) > 0.5]
 except Exception as ex:
     print(f"  CBC failed: {ex}"); selected = []; status = "CBC error"

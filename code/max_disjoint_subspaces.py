@@ -58,10 +58,16 @@ t0 = time.time()
 supports = {frozenset(v for v, p in C) for C in clique}
 subspaces = sorted({s for s in supports if is_subspace(s)})
 N = len(subspaces)
-full_spread = (2 ** n - 1) // (2 ** k - 1)
+# A spread of F_2^n into k-subspaces exists only when k | n; otherwise there is
+# no full spread to compare with, and the ratio below is not reported.
+full_spread = (2 ** n - 1) // (2 ** k - 1) if n % k == 0 else None
 print(f"distinct supports: {len(supports)} | subspace supports: {N} "
       f"({time.time()-t0:.0f}s)")
-print(f"a full spread of F_2^{n} into {k}-subspaces has {full_spread} members\n")
+if full_spread is not None:
+    print(f"a full spread of F_2^{n} into {k}-subspaces has {full_spread} members\n")
+else:
+    print(f"no spread of F_2^{n} into {k}-subspaces exists, since {k} does not "
+          f"divide {n}\n")
 if N == 0:
     raise SystemExit("no subspace supports; nothing to do")
 
@@ -107,6 +113,10 @@ for i in best:
 print(f"ILP: {N} variables, {ncons} constraints, limit {a.time_limit}s")
 prob.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=a.time_limit, warmStart=True))
 status = pulp.LpStatus[prob.status]
+# PuLP reports "Optimal" also when CBC stops on the time limit with a
+# feasible solution; only sol_status tells a proven optimum apart.
+if status == "Optimal" and prob.sol_status != pulp.LpSolutionOptimal:
+    status = "Feasible (time limit, not proven optimal)"
 sel = [i for i in range(N) if pulp.value(x[i]) and pulp.value(x[i]) > 0.5]
 if len(sel) < len(best):
     sel, status = best, status + " (greedy kept)"
@@ -121,6 +131,10 @@ exact = (status == "Optimal")
 print(f"\n===== maximum pairwise disjoint subspace supports: {m} "
       f"[CBC {status}] ({time.time()-t0:.0f}s) =====")
 print(f"  pairwise disjoint verified: {ok}")
+if not ok:
+    raise SystemExit("ABORTED: the selected subspaces are not pairwise disjoint; "
+                     "the value must not be used")
 print(f"  {'EXACT over the supports in this clique' if exact else 'lower bound only'}")
-print(f"  a full spread would have {full_spread}; "
-      f"this is {100*m/full_spread:.0f}% of one")
+if full_spread is not None:
+    print(f"  a full spread would have {full_spread}; "
+          f"this is {100*m/full_spread:.0f}% of one")

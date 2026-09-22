@@ -49,6 +49,8 @@ if isinstance(data, dict):
             break
 clique = [[(tuple(v), tuple(p)) for v, p in C] for C in data]
 M = len(clique)
+if M == 0:
+    raise SystemExit(f"ABORTED: {a.clique} contains no codewords")
 print(f"clique: {M} codewords of order {2**k} in U_{n}\n")
 
 
@@ -136,16 +138,20 @@ def desarguesian_spread(n, k):
                       for lam in range(q)) for pt in points]
 
 
-if n % k == 0 and k in IRRED:
+if n % k != 0:
+    print(f"\nno spread of F_2^{n} into {k}-subspaces exists, since {k} does not "
+          f"divide {n}")
+elif k not in IRRED:
+    print(f"\na spread of F_2^{n} into {k}-subspaces exists, but this script has no "
+          f"irreducible polynomial of degree {k} tabulated, so the reference count "
+          f"is skipped")
+else:
     spread = {frozenset(V) for V in desarguesian_spread(n, k)}
     in_spread = {s for s in subsp if s in spread}
     print("\nfor reference: supports lying in one fixed Desarguesian spread")
     print(f"  {len(in_spread)} of the {len(spread)} spread members occur as supports")
     print("  (a Desarguesian spread is not unique, so this count is relative")
     print("   to the particular spread built here)")
-else:
-    print("\n(k does not divide n, or k outside the tabulated irreducibles:")
-    print(" no Desarguesian spread of this shape)")
 
 
 # ------------------------- greedy lower bound on pairwise disjoint subspaces
