@@ -118,11 +118,13 @@ python code/ilp_subpool.py --pool pool.pkl --n 6 --d 6 --k 3 --aq 9 \
 
 The ILP never returns a clique smaller than its seed, so repeated runs with a
 growing subpool improve the bound monotonically. Both scripts write a companion
-`results_<ndk>.json`, with slightly different schemas: `exact_k2.py` records
-`status` and a boolean `exact`, since only a CBC status of `Optimal` certifies
-an exact value, while `ilp_subpool.py` records the solver status inside
-`method` together with the pool and subpool sizes, its optimum being optimal
-over the subpool rather than over the pool.
+results file, `results_<ndk>_exact.json` and `results_<ndk>.json` respectively,
+with slightly different schemas: `exact_k2.py` records `status` and a boolean
+`exact`, since only a CBC status of `Optimal` certifies an exact value, while
+`ilp_subpool.py` records the solver status inside `method` together with the
+pool and subpool sizes; the status refers to the subpool, not to the pool. 
+In both scripts the status reads `Optimal` only when CBC proves optimality 
+before the time limit.
 
 Candidate generation draws on five complementary generators, because no single
 one covers the search space: linear codewords built explicitly from subspaces in
@@ -190,7 +192,7 @@ Subspace values $A_2(n,d,k)$ are the exact optima tabulated at
 |$(5,4,2)$|$9$|$130$|exact|`clique_542.json`|
 |$(6,4,2)$|$21$|$571$|exact|`clique_642.json`|
 |$(7,4,2)$|$41$|$2924$|exact|`clique_742.json`|
-|$(8,4,2)$|$85$|$\ge 15060$|lower bound (optimal over a subpool of 500 000)|`clique_842.json`|
+|$(8,4,2)$|$85$|$\ge 15060$|lower bound (ILP over a subpool of 500 000)|`clique_842.json`|
 |$(6,4,3)$|$77$|$\ge 4858$|lower bound (sub-maximum distance)|`clique_643.json`|
 |$(7,6,3)$|$17$|$\ge 952$|lower bound|`clique_763.json`|
 |$(9,6,3)$|$73$|$\ge 20036$|lower bound, optimal over its subpool|`clique_963.json`|
