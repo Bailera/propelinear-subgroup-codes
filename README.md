@@ -191,7 +191,7 @@ Subspace values $A_2(n,d,k)$ are the exact optima tabulated at
 |-|-|-|-|-|
 |$(5,4,2)$|$9$|$130$|exact|`clique_542.json`|
 |$(6,4,2)$|$21$|$571$|exact|`clique_642.json`|
-|$(7,4,2)$|$41$|$2924$|exact|`clique_742.json`|
+|$(7,4,2)$|$41$|$3024$|exact|`clique_742.json`|
 |$(8,4,2)$|$85$|$\ge 15060$|lower bound (ILP over a subpool of 500 000)|`clique_842.json`|
 |$(6,4,3)$|$77$|$\ge 4858$|lower bound (sub-maximum distance)|`clique_643.json`|
 |$(7,6,3)$|$17$|$\ge 952$|lower bound|`clique_763.json`|
