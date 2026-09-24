@@ -1,3 +1,6 @@
-# Only PuLP is required; everything else is in the Python standard library.
 # PuLP ships the CBC solver used for every ILP in the paper.
 PuLP>=2.6
+# Needed only by exact_highs.py, for the certified upper bounds.
+numpy>=1.22
+scipy>=1.11
+highspy>=1.7
