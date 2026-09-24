@@ -238,8 +238,17 @@ def main():
     ap.add_argument("--quiet", action="store_true", help="only print the final verdict")
     args = ap.parse_args()
 
+    # Expand wildcards here rather than relying on the shell: bash and zsh
+    # expand cliques/*.json before Python sees it, but Windows PowerShell and
+    # cmd pass the pattern through literally.
+    import glob
+    files = []
+    for pattern in args.files:
+        matches = sorted(glob.glob(pattern))
+        files.extend(matches if matches else [pattern])
+
     all_ok = True
-    for path in args.files:
+    for path in files:
         if args.n and args.d and args.k:
             n, d, k = args.n, args.d, args.k
         else:
