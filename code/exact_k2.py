@@ -19,7 +19,7 @@ case; otherwise it is a lower bound.
 
 Writes results_<ndk>_exact.json and clique_<ndk>_exact.{pkl,json}.
 """
-import argparse, json, pickle, time
+import argparse, re, json, pickle, time
 from itertools import permutations, product
 from collections import defaultdict
 import psc_gen
@@ -31,6 +31,8 @@ ap.add_argument("--aq", type=int, required=True)
 ap.add_argument("--reference", type=int, default=None,
                 help="a reference value to print alongside the result (optional)")
 ap.add_argument("--time-limit", type=int, default=3600)
+ap.add_argument("--verbose", action="store_true",
+                help="show the CBC log on screen while it runs")
 a = ap.parse_args()
 
 n, d, k = a.n, a.d, 2
@@ -81,6 +83,14 @@ V = [H for H in subgroups if G['nondeg'](H)]
 print(f"  nondegenerate: {len(V)}")
 psc_gen.report_pool(G, V, k, "exhaustive enumeration")
 
+# Save the enumerated pool before attempting the ILP. The enumeration is the
+# expensive part and it is exhaustive, so it must survive a solver failure: at
+# n = 8 the pool holds 4.8 million subgroups and CBC can abort while building
+# the model, taking the whole run with it.
+pool_file = f"pool_{n}{d}{k}.pkl"
+pickle.dump([[[list(v), list(p)] for v, p in H] for H in V], open(pool_file, "wb"))
+print(f"  pool written to {pool_file} ({len(V)} subgroups)")
+
 import pulp
 core = [H - {e} for H in V]; N = len(V)
 prob = pulp.LpProblem("c", pulp.LpMaximize)
@@ -101,13 +111,36 @@ else:
                 prob += x[i] + x[j] <= 1; n_constraints += 1
 print(f"\n  {n_constraints} constraints, solving ILP (limit {a.time_limit}s)...")
 t0 = time.time()
-prob.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=a.time_limit))
-status = pulp.LpStatus[prob.status]
-# PuLP reports "Optimal" also when CBC stops on the time limit with a
-# feasible solution; only sol_status tells a proven optimum apart.
-if status == "Optimal" and prob.sol_status != pulp.LpSolutionOptimal:
-    status = "Feasible (time limit, not proven optimal)"
-sel = [i for i in range(N) if pulp.value(x[i]) and pulp.value(x[i]) > 0.5]
+tag = f"{n}{d}{k}"
+log_path = f"cbc_{tag}_exact.log"
+try:
+    prob.solve(pulp.PULP_CBC_CMD(msg=a.verbose, timeLimit=a.time_limit,
+                                 logPath=log_path))
+    status = pulp.LpStatus[prob.status]
+    # PuLP reports "Optimal" also when CBC stops on the time limit with a
+    # feasible solution; only sol_status tells a proven optimum apart.
+    if status == "Optimal" and prob.sol_status != pulp.LpSolutionOptimal:
+        status = "Feasible (time limit, not proven optimal)"
+    sel = [i for i in range(N) if pulp.value(x[i]) and pulp.value(x[i]) > 0.5]
+except Exception as exc:
+    # CBC aborts outright when the model is too large to build; the pool is
+    # already on disk, so fall back to a randomized greedy pass, which still
+    # yields a valid lower bound, and point at ilp_subpool.py for more.
+    print(f"  CBC failed ({type(exc).__name__}); falling back to greedy")
+    import random
+    best = []
+    for s in range(200):
+        random.seed(s)
+        order = list(range(N)); random.shuffle(order)
+        used = set(); chosen = []
+        for i in order:
+            if core[i] & used: continue
+            chosen.append(i); used |= core[i]
+        if len(chosen) > len(best): best = chosen
+    sel = best
+    status = "CBC failed, greedy fallback"
+    print(f"  for a better bound run:  python ilp_subpool.py --pool {pool_file} "
+          f"--n {n} --d {d} --k {k} --aq {a.aq} --max-subpool 500000")
 value = len(sel)
 exact = (status == "Optimal")
 print(f"\n===== A^P({n},{d},2) = {value}  [CBC {status}]  ({time.time()-t0:.0f}s) =====")
@@ -123,7 +156,21 @@ if not (ok_dist and ok_group):
 print(f"  factor {value/a.aq:.1f}x  (A_q={a.aq}" + (f", reference value {a.reference}" if a.reference else "") + ")")
 print(f"  {'EXACT VALUE' if exact else 'lower bound (ILP did not prove optimality)'}")
 
-tag = f"{n}{d}{k}"
+# When CBC stops before proving optimality, its log still records the best
+# upper bound it had established; the optimum then lies in [value, bound].
+upper_bound = None
+if not exact:
+    try:
+        m = re.search(r"Upper bound:\s*([-+0-9.eE]+)", open(log_path).read())
+        if m:
+            upper_bound = int(float(m.group(1)) + 1e-6)   # integral objective: floor
+    except OSError:
+        pass
+    if upper_bound is not None:
+        print(f"  CBC upper bound at stop: the optimum lies in [{value}, {upper_bound}]")
+    else:
+        print(f"  no upper bound found in {log_path}")
+
 serialized = [[[list(v), list(p)] for v, p in sorted(H)] for H in clique]
 pickle.dump(serialized, open(f"clique_{tag}_exact.pkl", "wb"))
 json.dump(serialized, open(f"clique_{tag}_exact.json", "w"))
@@ -132,6 +179,7 @@ json.dump({"case": f"({n},{d},2)", "A_P": value, "status": status, "exact": exac
            "operation": "as in the paper, eq:Un", "n_nondegenerate_subgroups": N,
            "verification_distances": ok_dist, "verification_groups": ok_group,
            "linear": linear, "nonlinear": value-linear,
+           "upper_bound": upper_bound, "cbc_log": log_path,
            "reference_value": a.reference, "A_q": a.aq},
           open(f"results_{tag}_exact.json", "w"), indent=2, ensure_ascii=False)
 print(f"  written: results_{tag}_exact.json, clique_{tag}_exact.{{pkl,json}}")
