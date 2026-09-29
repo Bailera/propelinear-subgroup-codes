@@ -47,6 +47,8 @@ code/
                          occurring in a clique, by ILP
   multi_structure.py     supports carrying several propelinear structures, with
                          their rank and whether they are subspaces
+  free_linear.py         whether any linear codeword can be added to a clique,
+                         by searching the translations the clique leaves free
 cliques/
   clique_<ndk>.json      explicit codeword lists, one file per case (24 files:
                          13 for the n = 4 table, 8 for the additional parameter
@@ -170,7 +172,7 @@ can be checked with `verify_psc.py` independently of how it was found.
 
 ## Analysing a clique
 
-Four scripts describe the structure of a deposited clique. None of them is
+Five scripts describe the structure of a deposited clique. None of them is
 needed to check the results; they reproduce the structural statements of the
 paper.
 
@@ -179,6 +181,7 @@ python code/structural_stats.py --clique cliques/clique_663.json --n 6 --k 3
 python code/count_sources.py --clique cliques/clique_884.json --n 8 --k 4
 python code/multi_structure.py --clique cliques/clique_884.json --n 8 --k 4
 python code/max_disjoint_subspaces.py --clique cliques/clique_884.json --n 8 --k 4
+python code/free_linear.py --clique cliques/clique_10105.json --n 10 --k 5
 ```
 
 `count_sources.py` splits the codewords into the three kinds used in the paper:
@@ -187,7 +190,11 @@ nonlinear support. `multi_structure.py` lists the supports carrying several
 pairwise disjoint structures, with their rank and whether they are subspaces.
 `max_disjoint_subspaces.py` closes by ILP the question of how many of the
 subspace supports occurring in a clique are pairwise disjoint, that is, how
-much of a spread they could form.
+much of a spread they could form. `free_linear.py` decides whether any linear
+codeword can be added to a clique: a linear codeword consists of translations
+$(v,\mathrm{id})$ only, so it fits exactly when all its nonzero vectors are
+translations left free by the clique, and the script searches those for a
+subspace of dimension $k$ instead of enumerating all of them.
 
 Outside the exactly determined cases the cliques are drawn from sampled pools,
 so these counts describe the deposited cliques rather than the optima.
@@ -315,7 +322,8 @@ pip install -r requirements.txt
 Only `psc_gen.py`, `ilp_subpool.py`, `exact_k2.py`, `spreadcompat_max.py` and
 `max_disjoint_subspaces.py` import PuLP, and only `exact_highs.py` imports the
 HiGHS bindings; `verify_psc.py`, `build_lift.py`,
-`structural_stats.py`, `count_sources.py` and `multi_structure.py` run on a bare
+`structural_stats.py`, `count_sources.py`, `multi_structure.py` and
+`free_linear.py` run on a bare
 Python installation, so checking the deposited cliques needs no dependencies at
 all.
 
