@@ -146,9 +146,11 @@ flags: each rests on a clique checked by `verify_psc.py` and a matching upper
 bound certified by `exact_highs.py`.
 
 Candidate generation draws on five complementary generators, because no single
-one covers the search space: linear codewords built explicitly from subspaces in
-reduced row echelon form (these never arise from sampling, as they require the
-identity permutation at every support vector); a walk up the subgroup lattice;
+one covers the search space: linear codewords built explicitly, by enumerating
+all subspaces in reduced row echelon form where their number permits and 
+otherwise sampling a fixed number of them as spans of random independent vectors
+(the walks essentially never produce them, as they require the identity 
+permutation at every support vector); a walk up the subgroup lattice;
 a walk restricted to commuting involutions, which is the only practical route
 to the elementary abelian codewords $\mathbb{Z}_2^k$; a mixed-order walk
 covering the intermediate values of the minimal number of generators; and a
