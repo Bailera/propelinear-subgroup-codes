@@ -10,9 +10,12 @@ The group operation is the one used in the paper (eq:Un):
 SUBGROUP GENERATION -- five complementary generators, because no single one
 covers the space and a pool built from one alone is systematically incomplete:
 
-  1. LINEAR codewords, built explicitly from the subspaces of dimension k in
-     reduced row echelon form. Sampling never produces them, since they
-     require the identity permutation at every support vector.
+  1. LINEAR codewords, built explicitly. All subspaces of dimension k are
+     enumerated in reduced row echelon form when there are at most
+     enum_threshold of them; otherwise LIN_CAP of them are sampled as spans
+     of random independent vectors (seeded, hence reproducible). The walks
+     essentially never produce them, since they require the identity
+     permutation at every support vector.
   2. LATTICE WALK: start from {e} and adjoin one random element at a time.
      Reaches subgroups needing any number of generators.
   3. INVOLUTION WALK: a walk restricted to commuting involutions. This is the
@@ -29,7 +32,7 @@ number of generators d(G) = log2 |G : Phi(G)| together with the count of
 linear codewords. If the value d(G)=k is missing, or if there are no linear
 codewords, the generation is biased and the pool is incomplete.
 """
-import json, os, pickle
+import json, pickle
 from itertools import permutations, combinations
 import random, math, time
 from collections import Counter, defaultdict
@@ -350,6 +353,7 @@ def pipeline(n, d, k, reference, a_q, GEN_TIME=300, ILP_TIME=900,
 
     # --- generator 0: previous pool (optional). Everything is revalidated before merging ---
     if PREVIOUS_POOL:
+        import os
         paths = [PREVIOUS_POOL] if isinstance(PREVIOUS_POOL, str) else list(PREVIOUS_POOL)
         for path in paths:
             if not os.path.exists(path):
@@ -480,8 +484,6 @@ def pipeline(n, d, k, reference, a_q, GEN_TIME=300, ILP_TIME=900,
         print(f"  factor {value/a_q:.1f}x  (reference value: {reference}, A_q={a_q})")
         report_pool(G, clique, k, "clique", warn=False)
         serialized = [[[list(v), list(p)] for v, p in H] for H in clique]
-        if os.path.exists(f"clique_{NAME}.json"):
-            print(f"  NOTE: clique_{NAME}.json already exists and will be overwritten")
         pickle.dump(serialized, open(f"clique_{NAME}.pkl", "wb"))
         json.dump(serialized, open(f"clique_{NAME}.json", "w"))
         json.dump({"case": f"({n},{d},{k})", "A_P": value, "method": method,
@@ -549,8 +551,6 @@ def pipeline(n, d, k, reference, a_q, GEN_TIME=300, ILP_TIME=900,
     print(f"  factor {value/a_q:.1f}x  (reference value: {reference}, A_q={a_q})")
     report_pool(G, clique, k, "clique", warn=False)
     serialized = [[[list(v), list(p)] for v, p in H] for H in clique]
-    if os.path.exists(f"clique_{NAME}.json"):
-        print(f"  NOTE: clique_{NAME}.json already exists and will be overwritten")
     pickle.dump(serialized, open(f"clique_{NAME}.pkl", "wb"))
     json.dump(serialized, open(f"clique_{NAME}.json", "w"))
     json.dump({"case": f"({n},{d},{k})", "A_P": value, "method": method,
