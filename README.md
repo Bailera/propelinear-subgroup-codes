@@ -49,10 +49,16 @@ code/
                          their rank and whether they are subspaces
   free_linear.py         whether any linear codeword can be added to a clique,
                          by searching the translations the clique leaves free
+  enumerate_nd.py        exhaustive enumeration of the nondegenerate subgroups of
+                         order 2^k, by extension through subgroups of index 2
+  filter_cyclic.py       restricts a complete pool to its cyclic codewords, or
+                         counts the cyclic codewords of a clique
 cliques/
   clique_<ndk>.json      explicit codeword lists, one file per case (24 files:
                          13 for the n = 4 table, 8 for the additional parameter
                          sets, 3 for the main theorem; (4,4,2) is shared)
+  clique_<ndk>_cyclic.json optimal codes with cyclic codewords only, for
+                         (n,4,2) with 4 <= n <= 8 (5 files)
   spreadcompat_<ndk>.json  the codewords underlying the product construction
                          (3 files)
   clique_<ndk>_lift.json   lifted families written by build_lift.py; only the
@@ -126,8 +132,27 @@ At $n=8$ the pool has $4\,812\,480$ subgroups and the ILP over the complete
 list is beyond what CBC can build, so the matching clique is found instead by
 `ilp_subpool.py` over a subpool of $500\,000$ candidates.
 
-For $k\ge 3$ no exhaustive enumeration is available. Candidate pools are
-sampled with `psc_gen.py` and a clique is then extracted by a greedy pass
+The same matching bounds apply whenever the candidates can be listed.
+`enumerate_nd.py` lists the nondegenerate subgroups of any order $2^k$ in $U_n$,
+climbing one level at a time: every group of order $2^{j+1}$ has a subgroup $H$
+of index $2$, which is normal, so the subgroups of order $2^{j+1}$ are exactly
+the sets $H\cup gH$ with $g\notin H$, $g^2\in H$ and $gHg^{-1}=H$, and
+nondegeneracy passes to subgroups. At $(6,6,3)$ this takes about a minute:
+
+```
+python code/enumerate_nd.py --n 6 --k 3 --compare pool_663.pkl
+python code/exact_highs.py  --pool pool_663_full.pkl --n 6 --d 6 --k 3 --aq 9 --lp-only
+```
+
+The enumeration gives $137\,160$ nondegenerate subgroups of order $8$, and, as
+checks, $1\,308$ of order $2$, the value of $\iota(6)$, and $31\,296$ of order
+$4$, as `exact_k2.py` does; `--compare` confirms that a sampled pool is
+contained in the complete list. The certified relaxation has value $272.89$, so
+$A^P_{nd}(6,6,3)\le 272$. Unlike the cases with $k=2$ the relaxation is not
+integral, and the value remains open between $253$ and $272$.
+
+At the larger parameters with $k\ge 3$ the candidates cannot be listed.
+Candidate pools are sampled with `psc_gen.py` and a clique is then extracted by a greedy pass
 followed by an ILP restricted to a subpool around the incumbent:
 
 ```
@@ -136,7 +161,11 @@ python code/ilp_subpool.py --pool pool.pkl --n 6 --d 6 --k 3 --aq 9 \
 ```
 
 The ILP never returns a clique smaller than its seed, so repeated runs with a
-growing subpool improve the bound monotonically. Both scripts write a companion
+growing subpool improve the bound monotonically; with `--min-compat 0` and
+`--max-subpool` at least the size of the pool, the subpool is the whole pool.
+The seed is passed to CBC as a starting solution, which on Windows requires
+PuLP's `keepFiles=True`; the script sets it, so CBC leaves its temporary files
+in the working directory. Both scripts write a companion
 results file, `results_<ndk>_exact.json` and `results_<ndk>.json` respectively,
 with slightly different schemas: `exact_k2.py` records `status` and a boolean
 `exact`, since only a CBC status of `Optimal` certifies an exact value, while
@@ -209,7 +238,7 @@ Subspace values $A_2(n,d,k)$ are the exact optima tabulated at
 |$(n,d,k)$|$A_2$|$A^P_{nd}$|status|file|
 |-|-|-|-|-|
 |$(4,4,2)$|$5$|$24$|exact|`clique_442.json`|
-|$(6,6,3)$|$9$|$\ge 253$|lower bound|`clique_663.json`|
+|$(6,6,3)$|$9$|$\ge 253$|lower bound; $\le 272$ by complete enumeration|`clique_663.json`|
 |$(8,8,4)$|$17$|$\ge 1298$|lower bound|`clique_884.json`|
 |$(10,10,5)$|$33$|$\ge 3509$|lower bound|`clique_10105.json`|
 
@@ -225,6 +254,29 @@ Subspace values $A_2(n,d,k)$ are the exact optima tabulated at
 |$(7,6,3)$|$17$|$\ge 952$|lower bound|`clique_763.json`|
 |$(9,6,3)$|$73$|$\ge 20036$|lower bound, optimal over its subpool|`clique_963.json`|
 |$(9,8,4)$|$33$|$\ge 2619$|lower bound|`clique_984.json`|
+
+### Cyclic codewords only
+
+|$(n,d,k)$|$A_2$|cyclic only|unrestricted|file|
+|-|-|-|-|-|
+|$(4,4,2)$|$5$|$16$|$24$|`clique_442_cyclic.json`|
+|$(5,4,2)$|$9$|$60$|$130$|`clique_542_cyclic.json`|
+|$(6,4,2)$|$21$|$346$|$571$|`clique_642_cyclic.json`|
+|$(7,4,2)$|$41$|$1638$|$3024$|`clique_742_cyclic.json`|
+|$(8,4,2)$|$85$|$8212$|$15060$|`clique_842_cyclic.json`|
+
+All five values are exact. An element of order $4$ lies in a single cyclic
+subgroup, so two cyclic codewords of order $4$ can share only their involution;
+the program then decomposes, its relaxation is integral, and the optimum is the
+number of involutions of $U_n$ that are squares of generators of nondegenerate
+cyclic subgroups. Each value is reproduced from the complete pool of
+`exact_k2.py`:
+
+```
+python code/filter_cyclic.py --pool pool_742_full.pkl --n 7 --k 2
+python code/exact_highs.py   --pool pool_742_full_cyclic.pkl --n 7 --d 4 --k 2 --aq 41 --out-tag 742_cyclic
+python code/filter_cyclic.py --clique clique_742_cyclic.json --n 7 --k 2
+```
 
 ### Complete table for n = 4
 
@@ -322,10 +374,11 @@ pip install -r requirements.txt
 Only `psc_gen.py`, `ilp_subpool.py`, `exact_k2.py`, `spreadcompat_max.py` and
 `max_disjoint_subspaces.py` import PuLP, and only `exact_highs.py` imports the
 HiGHS bindings; `verify_psc.py`, `build_lift.py`,
-`structural_stats.py`, `count_sources.py`, `multi_structure.py` and
-`free_linear.py` run on a bare
-Python installation, so checking the deposited cliques needs no dependencies at
-all.
+`structural_stats.py`, `count_sources.py`, `multi_structure.py`,
+`free_linear.py`, `enumerate_nd.py` and `filter_cyclic.py` run on a bare Python
+installation, so checking the deposited cliques needs no dependencies at all.
+(`psc_gen.py` imports PuLP only inside its search pipeline, so the last two,
+which use it for the group operation alone, do not need it.)
 
 ## License
 
