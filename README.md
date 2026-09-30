@@ -19,7 +19,7 @@ two and $d_P$ takes only even values; requiring $d_P\ge d$ is equivalent to
 $\lvert C_i\cap C_j\rvert\le 2^{(2k-d)/2}$, which is the threshold the
 verification script checks.
 
-Here the action is $(\sigma(v))_i=v_{\sigma^{-1}(i)}$ and the composition is
+Here the action is $`(\sigma(v))_i=v_{\sigma^{-1}(i)}`$ and the composition is
 $(\sigma\tau)(i)=\sigma(\tau(i))$; a subgroup is *nondegenerate* when its vector
 parts are pairwise distinct, i.e. $\lvert\mathrm{supp}(C)\rvert=\lvert C\rvert$.
 
@@ -68,7 +68,7 @@ cliques/
 File names encode the parameters as digits: `clique_663.json` is $(6,6,3)$ and
 `clique_10105.json` is $(10,10,5)$. Each file is a JSON list of codewords; each
 codeword is a list of its $2^k$ elements, and each element is a pair
-`[vector, permutation]` with the vector in $\mathbb{F}_2^n$ and the permutation
+`[vector, permutation]` with the vector in $`\mathbb{F}_2^n`$ and the permutation
 a tuple `p` in one-line notation, `p[i]` being the image of `i` (zero-based).
 
 ## Verifying the results
@@ -183,7 +183,7 @@ otherwise sampling a fixed number of them as spans of random independent vectors
 (the walks essentially never produce them, as they require the identity 
 permutation at every support vector); a walk up the subgroup lattice;
 a walk restricted to commuting involutions, which is the only practical route
-to the elementary abelian codewords $\mathbb{Z}_2^k$; a mixed-order walk
+to the elementary abelian codewords $`\mathbb{Z}_2^k`$; a mixed-order walk
 covering the intermediate values of the minimal number of generators; and a
 structured construction. Permutations of $2$-power order are constructed rather
 than sampled: involutions alone, for instance, make up only $0.26\%$ of
@@ -304,8 +304,8 @@ even values.
 |$(4,8,4)$|$1$|$2$|`clique_484.json`|
 
 At $d=2$ every pair of distinct $k$-subspaces already has $d_S\ge 2$, so
-$A_2(4,2,k)$ is the total number of $k$-subspaces of $\mathbb{F}_2^4$, namely
-the Gaussian binomial $\binom{4}{k}_2$: $1,15,35,15,1$. The propelinear column
+$A_2(4,2,k)$ is the total number of $k$-subspaces of $`\mathbb{F}_2^4`$, namely
+the Gaussian binomial $`\binom{4}{k}_2`$: $1,15,35,15,1$. The propelinear column
 behaves the same way: at $d=2$ the threshold $\lvert C_i\cap C_j\rvert\le
 2^{k-1}$ is so weak that no pair of distinct nondegenerate subgroups violates
 it, so $A^P_{nd}(4,2,k)$ is simply the number of nondegenerate subgroups of
@@ -336,7 +336,7 @@ spread-compatible codewords themselves.
 
 `build_lift.py` turns a spread-compatible base into the lifted family and
 verifies it at the new parameters from first principles: it rebuilds the
-Desarguesian spread of $\mathbb{F}_2^{2n}$, forms the diagonal lifts
+Desarguesian spread of $`\mathbb{F}_2^{2n}`$, forms the diagonal lifts
 $D_i=\iota(C_i\times C_i)$, and checks that every codeword of the resulting
 family is a nondegenerate subgroup of order $2^{2k}$, that all pairs meet only
 in the identity, and that each $D_i$ is itself spread-compatible in $U_{2n}$ --
