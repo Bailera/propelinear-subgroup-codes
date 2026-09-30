@@ -157,7 +157,7 @@ for j in range(S): x[j].setInitialValue(1)
 print(f"  {n_constraints} constraints ({time.time()-t0:.0f}s), solving (limit {a.time_limit}s)...")
 t0 = time.time()
 try:
-    prob.solve(pulp.PULP_CBC_CMD(msg=1, timeLimit=a.time_limit, warmStart=True))
+    prob.solve(pulp.PULP_CBC_CMD(msg=1, timeLimit=a.time_limit, warmStart=True, keepFiles=True))
     status = pulp.LpStatus[prob.status]
     # PuLP reports "Optimal" also when CBC stops on the time limit with a
     # feasible solution; only sol_status tells a proven optimum apart.
