@@ -127,7 +127,7 @@ $y$ it builds the explicitly dual-feasible pair $(y,z)$ with $y\ge 0$ and
 $z=\max(0,1-A^{T}y)$, and reports $\sum y+\sum z$, which bounds the relaxation
 by weak duality. The bound is valid only because the pool is complete; over a
 sampled pool it would bound the sample and nothing more. In all four cases
-$n=5,\dots,8$ the relaxation turns out to be integral and the two bounds meet.
+$n=5,\dots,8$ the value of the relaxation equals the size of the clique, so the two bounds meet.
 At $n=8$ the pool has $4\,812\,480$ subgroups and the ILP over the complete
 list is beyond what CBC can build, so the matching clique is found instead by
 `ilp_subpool.py` over a subpool of $500\,000$ candidates.
@@ -337,7 +337,7 @@ spread-compatible codewords themselves.
 `build_lift.py` turns a spread-compatible base into the lifted family and
 verifies it at the new parameters from first principles: it rebuilds the
 Desarguesian spread of $`\mathbb{F}_2^{2n}`$, forms the diagonal lifts
-$D_i=\iota(C_i\times C_i)$, and checks that every codeword of the resulting
+$D_i=\beta(C_i\times C_i)$, and checks that every codeword of the resulting
 family is a nondegenerate subgroup of order $2^{2k}$, that all pairs meet only
 in the identity, and that each $D_i$ is itself spread-compatible in $U_{2n}$ --
 the last being what the tower corollary of the paper needs in order to iterate.
