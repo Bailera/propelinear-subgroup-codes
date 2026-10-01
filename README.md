@@ -148,8 +148,8 @@ The enumeration gives $137\,160$ nondegenerate subgroups of order $8$, and, as
 checks, $1\,308$ of order $2$, the value of $\iota(6)$, and $31\,296$ of order
 $4$, as `exact_k2.py` does; `--compare` confirms that a sampled pool is
 contained in the complete list. The certified relaxation has value $272.89$, so
-$A^P_{nd}(6,6,3)\le 272$. Unlike the cases with $k=2$ the relaxation is not
-integral, and the value remains open between $253$ and $272$.
+$A^P_{nd}(6,6,3)\le 272$. Unlike the cases with $k=2$ the value of the relaxation
+is not an integer, and the value remains open between $253$ and $272$.
 
 At the larger parameters with $k\ge 3$ the candidates cannot be listed.
 Candidate pools are sampled with `psc_gen.py` and a clique is then extracted by a greedy pass
