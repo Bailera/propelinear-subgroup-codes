@@ -325,14 +325,15 @@ $A^P_{nd}(2n,4k,2k) \ge (2^{2n}-1)/(2^{2k}-1) + m$.
 
 |lift|$m$|$A^P_{nd} \ge$|$A_2$|file|
 |-|-|-|-|-|
-|$(12,12,6)$|$206$|$271$|$65$|`spreadcompat_663.json`|
+|$(12,12,6)$|$219$|$284$|$65$|`spreadcompat_663.json`|
 |$(16,16,8)$|$994$|$1251$|$257$|`spreadcompat_884.json`|
 |$(20,20,10)$|$2658$|$3683$|$1025$|`spreadcompat_10105.json`|
 
-The three counts were obtained by ILP over the corresponding pool, stopped at a
-time limit, and are therefore lower bounds on the maximum available in each
-pool -- which is all the construction requires. Each file lists the
-spread-compatible codewords themselves.
+The count for $(12,12,6)$ was obtained by ILP over the $20\,520$ spread-compatible
+codewords among the complete list of candidates at $(6,6,3)$, the other two over
+the sampled pools; all three runs were stopped at a time limit, so the counts are
+lower bounds on the maximum available -- which is all the construction requires.
+Each file lists the spread-compatible codewords themselves.
 
 `build_lift.py` turns a spread-compatible base into the lifted family and
 verifies it at the new parameters from first principles: it rebuilds the
