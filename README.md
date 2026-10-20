@@ -53,6 +53,9 @@ code/
                          order 2^k, by extension through subgroups of index 2
   filter_cyclic.py       restricts a complete pool to its cyclic codewords, or
                          counts the cyclic codewords of a clique
+  cyclic_count.py        checks the formula for the largest code with cyclic
+                         codewords (Section 5.5) against a brute-force count
+                         of h-th roots for n ≤ 8, and prints J_k(n)/ι(n).
 cliques/
   clique_<ndk>.json      explicit codeword lists, one file per case (24 files:
                          13 for the n = 4 table, 8 for the additional parameter
