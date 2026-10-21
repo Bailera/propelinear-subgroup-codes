@@ -368,8 +368,8 @@ the lift needs.
 
 ## Requirements
 
-Python 3.9 or later and PuLP, which ships the CBC solver; `exact_highs.py`
-additionally needs NumPy, SciPy and highspy:
+Python 3.9 or later and PuLP 2.6 to 3.x, which ships the CBC solver (PuLP 4 no longer does);
+`exact_highs.py` additionally needs NumPy, SciPy and highspy:
 
 ```
 pip install -r requirements.txt
