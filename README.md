@@ -450,10 +450,12 @@ python code/exact_fq.py --n 4 --q 3
 python code/exact_fq.py --verify cliques/q3/clique_442_q3.json --n 4 --q 3
 ```
 
-With `--q 2` the script reproduces $A^P(4,4,2)=24$. With `--force-linear` or
-`--forbid-linear` it requires or excludes linear codewords: over
-$`\mathbb{F}_3`$ both runs reach $28$, whereas over $`\mathbb{F}_2`$ requiring a
-linear codeword lowers the optimum to $22$.
+With `--q 2` the script reproduces $A^P(4,4,2)=24$. With `--q 5` every subgroup
+of order $25$ is linear and the optimum is the spread, $26$: when the
+characteristic exceeds $n$, the translations form the unique Sylow $p$-subgroup,
+as the paper explains. With `--force-linear` or `--forbid-linear` it requires or
+excludes linear codewords: over $`\mathbb{F}_3`$ both runs reach $28$, whereas
+over $`\mathbb{F}_2`$ requiring a linear codeword lowers the optimum to $22$.
 
 In `clique_442_q3.json` each element is a triple `[vector, permutation,
 scalars]`: the monomial map sends coordinate `i` to `p[i]` and multiplies it by
