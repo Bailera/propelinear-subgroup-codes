@@ -1,7 +1,8 @@
 # PuLP 2.6 to 3.x ships the CBC solver used for most ILPs in the paper;
 # PuLP 4 no longer bundles CBC (PULP_CBC_CMD is gone), hence the upper limit.
 PuLP>=2.6,<4
-# Needed only by exact_highs.py: certified LP bounds and ILPs over complete pools.
+# Needed by exact_highs.py (certified LP bounds and ILPs over complete pools);
+# NumPy also by cyclic_count.py.
 numpy>=1.22
 scipy>=1.11
 highspy>=1.7
