@@ -14,10 +14,10 @@ pairwise at propelinear distance at least $d$, where
 
 $$d_P(C_i,C_j)=2k-2\log_2\lvert C_i\cap C_j\rvert .$$
 
-The intersection of two subgroups is a subgroup, so its order is a power of
-two and $d_P$ takes only even values; requiring $d_P\ge d$ is equivalent to
-$\lvert C_i\cap C_j\rvert\le 2^{(2k-d)/2}$, which is the threshold the
-verification script checks.
+The intersection of two subgroups of order $2^k$ is a subgroup of each, so its
+order is a power of two and $d_P$ takes only even values; requiring $d_P\ge d$
+is equivalent to $\lvert C_i\cap C_j\rvert\le 2^{(2k-d)/2}$, which is the
+threshold the verification script checks.
 
 Here the action is $`(\sigma(v))_i=v_{\sigma^{-1}(i)}`$ and the composition is
 $(\sigma\tau)(i)=\sigma(\tau(i))$; a subgroup is *nondegenerate* when its vector
@@ -33,8 +33,9 @@ code/
   ilp_subpool.py         maximum-clique ILP over a restricted subpool
   exact_k2.py            exhaustive enumeration of the subgroups of order 4,
                          with a clique found by ILP over the complete list
-  exact_highs.py         certified upper bound: linear relaxation over a complete
-                         pool, bounded by weak duality from an explicit dual point
+  exact_highs.py         ILP and certified upper bound over a complete pool, with
+                         HiGHS: the linear relaxation is bounded by weak duality
+                         from an explicit dual point
   spreadcompat_max.py    largest disjoint family of spread-compatible codewords
   build_lift.py          builds and verifies the lifted families of the product
                          construction, from a spread-compatible base
@@ -53,9 +54,11 @@ code/
                          order 2^k, by extension through subgroups of index 2
   filter_cyclic.py       restricts a complete pool to its cyclic codewords, or
                          counts the cyclic codewords of a clique
-  cyclic_count.py        checks the formula for the largest code with cyclic
-                         codewords (Section 5.5) against a brute-force count
-                         of h-th roots for n ≤ 8, and prints J_k(n)/ι(n).
+  cyclic_count.py        evaluates the formula J_k(n) for the largest code with
+                         cyclic codewords, checks it against a brute-force count
+                         for n <= 8, and prints J_k(n)/iota(n)
+  exact_fq.py            exact value at (n,4,2) over F_q, q prime, by exhaustive
+                         enumeration, with a verification mode for codes over F_q
 cliques/
   clique_<ndk>.json      explicit codeword lists, one file per case (24 files:
                          13 for the n = 4 table, 8 for the additional parameter
@@ -66,6 +69,7 @@ cliques/
                          (3 files)
   clique_<ndk>_lift.json   lifted families written by build_lift.py; only the
                          smallest, at (12,12,6), is deposited here (1 file)
+  q3/clique_442_q3.json  an optimal code at (4,4,2) over F_3, with 28 codewords
 ```
 
 File names encode the parameters as digits: `clique_663.json` is $(6,6,3)$ and
@@ -73,6 +77,8 @@ File names encode the parameters as digits: `clique_663.json` is $(6,6,3)$ and
 codeword is a list of its $2^k$ elements, and each element is a pair
 `[vector, permutation]` with the vector in $`\mathbb{F}_2^n`$ and the permutation
 a tuple `p` in one-line notation, `p[i]` being the image of `i` (zero-based).
+The code over $`\mathbb{F}_3`$ uses the format described in
+[Beyond the binary field](#beyond-the-binary-field).
 
 ## Verifying the results
 
@@ -96,8 +102,9 @@ For each file it checks that
 equivalent to $d_P\ge d$.
 
 The threshold in (4) is **not** always zero. For $d=2k$ distinct codewords may
-meet only in the identity, but for $d<2k$ sharing one nonidentity element is
-permitted, and the script computes the correct bound from $(n,d,k)$. The exit
+meet only in the identity, but for $d<2k$ they may share up to
+$2^{(2k-d)/2}-1$ nonidentity elements, one at $(6,4,3)$ and three at
+$(4,4,4)$, and the script computes the correct bound from $(n,d,k)$. The exit
 status is 0 if all checks pass, so the script can be used in a test suite.
 
 Parameters are inferred from the leading digits of the file name whenever that
@@ -108,6 +115,11 @@ and can always be given explicitly with `--n --d --k`:
 ```
 python code/verify_psc.py cliques/spreadcompat_884.json --n 8 --d 8 --k 4
 ```
+
+`verify_psc.py` handles the binary case only. The code over $`\mathbb{F}_3`$ in
+`cliques/q3/` is checked by `exact_fq.py` instead, as described in
+[Beyond the binary field](#beyond-the-binary-field); it sits in its own folder
+so that `cliques/*.json` does not pick it up.
 
 ## Reproducing the results
 
@@ -130,10 +142,10 @@ $y$ it builds the explicitly dual-feasible pair $(y,z)$ with $y\ge 0$ and
 $z=\max(0,1-A^{T}y)$, and reports $\sum y+\sum z$, which bounds the relaxation
 by weak duality. The bound is valid only because the pool is complete; over a
 sampled pool it would bound the sample and nothing more. In all four cases
-$n=5,\dots,8$ the value of the relaxation equals the size of the clique, so the two bounds meet.
-At $n=8$ the pool has $4\,812\,480$ subgroups and the ILP over the complete
-list is beyond what CBC can build, so the matching clique is found instead by
-`ilp_subpool.py` over a subpool of $500\,000$ candidates.
+$n=5,\dots,8$ the value of the relaxation equals the size of the clique, so the
+two bounds meet. At $n=8$ the pool has $4\,812\,480$ subgroups and the ILP over
+the complete list is beyond what CBC can build, so the matching clique is found
+instead by `ilp_subpool.py` over a subpool of $500\,000$ candidates.
 
 The same matching bounds apply whenever the candidates can be listed.
 `enumerate_nd.py` lists the nondegenerate subgroups of any order $2^k$ in $U_n$,
@@ -149,17 +161,21 @@ python code/exact_highs.py  --pool pool_663_full.pkl --n 6 --d 6 --k 3 --aq 9 --
 
 The enumeration gives $137\,160$ nondegenerate subgroups of order $8$, and, as
 checks, $1\,308$ of order $2$, the value of $\iota(6)$, and $31\,296$ of order
-$4$, as `exact_k2.py` does; `--compare` confirms that a sampled pool is
-contained in the complete list. The certified relaxation has value $272.89$, so
-$A^P_{nd}(6,6,3)\le 272$. Unlike the cases with $k=2$ the value of the relaxation
-is not an integer, and the value remains open between $253$ and $272$.
+$4$, as `exact_k2.py` does; `--compare` confirms that a sampled pool, such as
+one produced by `psc_gen.py` below, is contained in the complete list, and can
+be omitted. The certified relaxation has value $272.89$, so
+$A^P(6,6,3)\le 272$. Unlike the cases with $k=2$ the value of the relaxation is
+not an integer, and the value remains open between $253$ and $272$.
 
 At the larger parameters with $k\ge 3$ the candidates cannot be listed.
-Candidate pools are sampled with `psc_gen.py` and a clique is then extracted by a greedy pass
+Candidate pools are sampled with the pipeline of `psc_gen.py`, which writes
+`pool_<ndk>.pkl` together with a first clique; `GEN_TIME` is the time budget of
+the generators, in seconds. A clique is then extracted by a greedy pass
 followed by an ILP restricted to a subpool around the incumbent:
 
 ```
-python code/ilp_subpool.py --pool pool.pkl --n 6 --d 6 --k 3 --aq 9 \
+python -c "import sys; sys.path.insert(0, 'code'); import psc_gen; psc_gen.pipeline(6, 6, 3, reference=None, a_q=9, GEN_TIME=3600)"
+python code/ilp_subpool.py --pool pool_663.pkl --n 6 --d 6 --k 3 --aq 9 \
     --seed cliques/clique_663.json --max-subpool 20000 --time-limit 3600
 ```
 
@@ -168,22 +184,22 @@ growing subpool improve the bound monotonically; with `--min-compat 0` and
 `--max-subpool` at least the size of the pool, the subpool is the whole pool.
 The seed is passed to CBC as a starting solution, which on Windows requires
 PuLP's `keepFiles=True`; the script sets it, so CBC leaves its temporary files
-in the working directory. Both scripts write a companion
-results file, `results_<ndk>_exact.json` and `results_<ndk>.json` respectively,
-with slightly different schemas: `exact_k2.py` records `status` and a boolean
-`exact`, since only a CBC status of `Optimal` certifies an exact value, while
-`ilp_subpool.py` records the solver status inside `method` together with the
-pool and subpool sizes; the status refers to the subpool, not to the pool. 
-In both scripts the status reads `Optimal` only when CBC proves optimality 
-before the time limit. The exact values of the paper do not rest on these
-flags: each rests on a clique checked by `verify_psc.py` and a matching upper
-bound certified by `exact_highs.py`.
+in the working directory. `exact_k2.py` and `ilp_subpool.py` write companion
+results files, `results_<ndk>_exact.json` and `results_<ndk>.json`
+respectively, with slightly different schemas: `exact_k2.py` records `status`
+and a boolean `exact`, since only a CBC status of `Optimal` certifies an exact
+value, while `ilp_subpool.py` records the solver status inside `method`
+together with the pool and subpool sizes; the status refers to the subpool, not
+to the pool. In both scripts the status reads `Optimal` only when CBC proves
+optimality before the time limit. The exact values of the paper do not rest on
+these flags: each rests on a clique checked by `verify_psc.py` and a matching
+upper bound certified by `exact_highs.py`.
 
 Candidate generation draws on five complementary generators, because no single
 one covers the search space: linear codewords built explicitly, by enumerating
-all subspaces in reduced row echelon form where their number permits and 
+all subspaces in reduced row echelon form where their number permits and
 otherwise sampling a fixed number of them as spans of random independent vectors
-(the walks essentially never produce them, as they require the identity 
+(the walks essentially never produce them, as they require the identity
 permutation at every support vector); a walk up the subgroup lattice;
 a walk restricted to commuting involutions, which is the only practical route
 to the elementary abelian codewords $`\mathbb{Z}_2^k`$; a mixed-order walk
@@ -234,11 +250,13 @@ so these counts describe the deposited cliques rather than the optima.
 ## Results
 
 Subspace values $A_2(n,d,k)$ are the exact optima tabulated at
-[https://subspacecodes.uni-bayreuth.de](https://subspacecodes.uni-bayreuth.de).
+[https://subspacecodes.uni-bayreuth.de](https://subspacecodes.uni-bayreuth.de),
+and $A^P(n,d,k)$ denotes the largest size of a propelinear subgroup code with
+parameters $(n,d,k)$.
 
 ### Main theorem
 
-|$(n,d,k)$|$A_2$|$A^P_{nd}$|status|file|
+|$(n,d,k)$|$A_2$|$A^P$|status|file|
 |-|-|-|-|-|
 |$(4,4,2)$|$5$|$24$|exact|`clique_442.json`|
 |$(6,6,3)$|$9$|$\ge 253$|lower bound; $\le 272$ by complete enumeration|`clique_663.json`|
@@ -247,7 +265,7 @@ Subspace values $A_2(n,d,k)$ are the exact optima tabulated at
 
 ### Additional parameter sets
 
-|$(n,d,k)$|$A_2$|$A^P_{nd}$|status|file|
+|$(n,d,k)$|$A_2$|$A^P$|status|file|
 |-|-|-|-|-|
 |$(5,4,2)$|$9$|$130$|exact|`clique_542.json`|
 |$(6,4,2)$|$21$|$571$|exact|`clique_642.json`|
@@ -281,6 +299,15 @@ python code/exact_highs.py   --pool pool_742_full_cyclic.pkl --n 7 --d 4 --k 2 -
 python code/filter_cyclic.py --clique clique_742_cyclic.json --n 7 --k 2
 ```
 
+These are the values $J_2(n)$ of the formula that the paper proves for the
+largest code with cyclic codewords at maximum distance. `cyclic_count.py`
+evaluates $J_k(n)$, checks it against a brute-force count for $n\le 8$ and
+$k=2,3,4$, and prints the ratio $J_k(n)/\iota(n)$, which tends to $4^{1-k}$:
+
+```
+python code/cyclic_count.py
+```
+
 ### Complete table for n = 4
 
 All thirteen entries are exact, obtained by exhaustive enumeration followed by
@@ -290,7 +317,7 @@ and $88$ respectively); these are the candidates. File names use the even
 representative of each pair of coinciding distances, since $d_P$ takes only
 even values.
 
-|$(n,d,k)$|$A_2$|$A^P_{nd}$|file|
+|$(n,d,k)$|$A_2$|$A^P$|file|
 |-|-|-|-|
 |$(4,2,0)$|$1$|$1$|`clique_420.json`|
 |$(4,2,1)$|$15$|$66$|`clique_421.json`|
@@ -311,32 +338,67 @@ $A_2(4,2,k)$ is the total number of $k$-subspaces of $`\mathbb{F}_2^4`$, namely
 the Gaussian binomial $`\binom{4}{k}_2`$: $1,15,35,15,1$. The propelinear column
 behaves the same way: at $d=2$ the threshold $\lvert C_i\cap C_j\rvert\le
 2^{k-1}$ is so weak that no pair of distinct nondegenerate subgroups violates
-it, so $A^P_{nd}(4,2,k)$ is simply the number of nondegenerate subgroups of
-order $2^k$ -- the four values $66$, $252$, $276$, $88$ quoted above. At $d=4$ only $k=2$
-admits more than one codeword, and there a spread of five lines exists; for
-$k=1,3,4$ the distance $4$ is unattainable, and likewise for every $d\ge 5$.
+it, so $A^P(4,2,k)$ is simply the number of nondegenerate subgroups of
+order $2^k$ -- the four values $66$, $252$, $276$, $88$ quoted above. In the
+subspace column, at $d=4$ only $k=2$ admits more than one codeword, and there a
+spread of five lines exists; for $k=1,3,4$ the distance $4$ is unattainable,
+and likewise for every $d\ge 5$.
 
-`clique_442.json` realizes $A^P_{nd}(4,4,2)=24$ and is shared between this
-table and the main theorem, since $(4,4,2)$ is the $k\mid n$ base case of both.
+The candidates come from `enumerate_nd.py`, and each entry is an ILP over the
+complete list: `exact_highs.py` at maximum distance, and `ilp_subpool.py`, with
+the whole pool as subpool, below it. For instance, for $(4,6,3)$ and $(4,4,3)$:
+
+```
+python code/enumerate_nd.py --n 4 --k 3
+python code/exact_highs.py  --pool pool_463_full.pkl --n 4 --d 6 --k 3 --aq 1
+python code/ilp_subpool.py  --pool pool_463_full.pkl --n 4 --d 4 --k 3 --aq 1 --min-compat 0 --max-subpool 1000
+```
+
+When the greedy seed of `ilp_subpool.py` is already optimal, as at $(4,4,4)$,
+the method reads `seed (ILP Optimal did not improve)`; since the subpool is the
+whole pool, the status `Optimal` still certifies the value.
+
+`clique_442.json` realizes $A^P(4,4,2)=24$ and is shared between this table and
+the main theorem, since $(4,4,2)$ belongs to both.
 
 ### Product construction
 
 A codeword is *spread-compatible* when its permutation is nontrivial at every
 nonzero support vector. Given $m$ pairwise disjoint spread-compatible codewords
 of order $2^k$ in $U_n$ with $k \mid n$, the product construction gives
-$A^P_{nd}(2n,4k,2k) \ge (2^{2n}-1)/(2^{2k}-1) + m$.
+$A^P(2n,4k,2k) \ge (2^{2n}-1)/(2^{2k}-1) + m$.
 
-|lift|$m$|$A^P_{nd} \ge$|$A_2$|file|
+|lift|$m$|$A^P \ge$|$A_2$|file|
 |-|-|-|-|-|
 |$(12,12,6)$|$219$|$284$|$65$|`spreadcompat_663.json`|
 |$(16,16,8)$|$994$|$1251$|$257$|`spreadcompat_884.json`|
 |$(20,20,10)$|$2658$|$3683$|$1025$|`spreadcompat_10105.json`|
 
-The count for $(12,12,6)$ was obtained by ILP over the $20\,520$ spread-compatible
-codewords among the complete list of candidates at $(6,6,3)$, the other two over
-the sampled pools; all three runs were stopped at a time limit, so the counts are
-lower bounds on the maximum available -- which is all the construction requires.
-Each file lists the spread-compatible codewords themselves.
+The count for $(12,12,6)$ comes from the complete list of candidates at
+$(6,6,3)$: a one-line filter extracts its $20\,520$ spread-compatible
+codewords, and `exact_highs.py` looks for a large disjoint family among them.
+The other two come from the sampled pools; for a sampled pool,
+`spreadcompat_max.py` applies the same filter and solves the ILP with CBC. All
+three runs were stopped at a time limit, so the counts are lower bounds on the
+maximum available -- which is all the construction requires. Each file lists
+the spread-compatible codewords themselves.
+
+```
+python code/enumerate_nd.py --n 6 --k 3
+python -c "import pickle; P=pickle.load(open('pool_663_full.pkl','rb')); I=list(range(6)); S=[H for H in P if all(p!=I for v,p in H if any(v))]; pickle.dump(S,open('pool_663_sc.pkl','wb')); print(len(S))"
+python code/exact_highs.py --pool pool_663_sc.pkl --n 6 --d 6 --k 3 --aq 9 --time-limit 36000 --out-tag 663_sc
+python code/exact_highs.py --pool pool_663_sc.pkl --n 6 --d 6 --k 3 --aq 9 --lp-only
+python code/spreadcompat_max.py --pool pool_884.pkl --n 8 --k 4
+```
+
+Over the restricted pool, the value that `exact_highs.py` prints as
+$A^P(6,6,3)$ is the size of a disjoint family of spread-compatible codewords,
+that is, $m$, and with `--lp-only` the bound it prints is an upper bound on $m$.
+The deposited family comes from a run with a ten-hour limit, and a later run of
+sixty hours also stopped at $219$; a time-limited run is not deterministic, so
+rerunning it may return a different count. The certified linear relaxation over
+the $20\,520$ candidates gives $m\le 225$, so the product construction from
+$(6,6,3)$ yields at most $65+225=290$ codewords at $(12,12,6)$.
 
 `build_lift.py` turns a spread-compatible base into the lifted family and
 verifies it at the new parameters from first principles: it rebuilds the
@@ -366,23 +428,62 @@ propelinear codes it denotes the stronger requirement that each permutation
 move every coordinate, which defines the full propelinear codes and is not what
 the lift needs.
 
+### Beyond the binary field
+
+Over $`\mathbb{F}_q`$ the ambient group is
+$`U_n^{(q)}=\mathbb{F}_q^n\rtimes(\mathbb{F}_q^*\wr S_n)`$, where the monomial
+group $`\mathbb{F}_q^*\wr S_n`$ permutes the coordinates and multiplies them by
+nonzero scalars, and the distance is taken with logarithms to base $q$. At
+$(4,4,2)$ over $`\mathbb{F}_3`$ the group has $31\,104$ elements, and its
+subgroups of order $9$, each cyclic or generated by two commuting elements of
+order $3$, can all be listed. `exact_fq.py` does so, keeps the $930$
+nondegenerate ones, among them the $130$ two-dimensional subspaces of
+$`\mathbb{F}_3^4`$, and finds by ILP the largest family meeting pairwise only in
+the identity:
+
+|$(n,d,k)$|$q$|$A_q$|$A^P$|status|file|
+|-|-|-|-|-|-|
+|$(4,4,2)$|$3$|$10$|$28$|exact|`q3/clique_442_q3.json`|
+
+```
+python code/exact_fq.py --n 4 --q 3
+python code/exact_fq.py --verify cliques/q3/clique_442_q3.json --n 4 --q 3
+```
+
+With `--q 2` the script reproduces $A^P(4,4,2)=24$. With `--force-linear` or
+`--forbid-linear` it requires or excludes linear codewords: over
+$`\mathbb{F}_3`$ both runs reach $28$, whereas over $`\mathbb{F}_2`$ requiring a
+linear codeword lowers the optimum to $22$.
+
+In `clique_442_q3.json` each element is a triple `[vector, permutation,
+scalars]`: the monomial map sends coordinate `i` to `p[i]` and multiplies it by
+`s[i]`, and the product is $(x,M)(y,N)=(x+My,MN)$. The `--verify` mode rebuilds
+the operation from explicit monomial matrices, independently of the enumeration
+code, checks that it is associative, and tests the same conditions as
+`verify_psc.py`: every codeword is a nondegenerate subgroup of order $q^2$, and
+any two meet only in the identity.
+
 ## Requirements
 
-Python 3.9 or later and PuLP 2.6 to 3.x, which ships the CBC solver (PuLP 4 no longer does);
-`exact_highs.py` additionally needs NumPy, SciPy and highspy:
+Python 3.9 or later and PuLP 2.6 to 3.x, which ships the CBC solver (PuLP 4 no
+longer does); `exact_highs.py` additionally needs NumPy, SciPy and highspy, and
+`cyclic_count.py` needs NumPy:
 
 ```
 pip install -r requirements.txt
 ```
 
-Only `psc_gen.py`, `ilp_subpool.py`, `exact_k2.py`, `spreadcompat_max.py` and
-`max_disjoint_subspaces.py` import PuLP, and only `exact_highs.py` imports the
-HiGHS bindings; `verify_psc.py`, `build_lift.py`,
+Only `psc_gen.py`, `ilp_subpool.py`, `exact_k2.py`, `exact_fq.py`,
+`spreadcompat_max.py` and `max_disjoint_subspaces.py` import PuLP, only
+`exact_highs.py` imports the HiGHS bindings, and only `exact_highs.py` and
+`cyclic_count.py` import NumPy; `verify_psc.py`, `build_lift.py`,
 `structural_stats.py`, `count_sources.py`, `multi_structure.py`,
 `free_linear.py`, `enumerate_nd.py` and `filter_cyclic.py` run on a bare Python
 installation, so checking the deposited cliques needs no dependencies at all.
 (`psc_gen.py` imports PuLP only inside its search pipeline, so the last two,
-which use it for the group operation alone, do not need it.)
+which use it for the group operation alone, do not need it; likewise
+`exact_fq.py` imports PuLP only for the ILP, so its `--verify` mode needs no
+dependencies either.)
 
 ## License
 
